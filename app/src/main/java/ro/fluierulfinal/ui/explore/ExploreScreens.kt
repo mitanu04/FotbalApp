@@ -30,11 +30,16 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -50,6 +55,7 @@ import ro.fluierulfinal.data.repository.DataSource
 import ro.fluierulfinal.domain.model.AppTime
 import ro.fluierulfinal.domain.model.Fixture
 import ro.fluierulfinal.domain.model.FixtureStatus
+import ro.fluierulfinal.ui.components.DateChipsRow
 import ro.fluierulfinal.ui.components.LeagueLogo
 import ro.fluierulfinal.ui.components.tabListPadding
 import ro.fluierulfinal.ui.components.TeamLogo
@@ -102,8 +108,11 @@ fun ExploreLeagueScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val colors = MaterialTheme.colorScheme
+    val snackbar = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbar) },
         topBar = {
             TopAppBar(
                 title = {
@@ -120,7 +129,14 @@ fun ExploreLeagueScreen(
         },
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
-            DayChips(state.days, state.selectedDay, state.today, onSelect = viewModel::selectDay)
+            DateChipsRow(
+                days = state.days, selected = state.selectedDay, today = state.today,
+                onSelect = viewModel::selectDay,
+                isEnabled = viewModel::isDayAvailable,
+                onDisabledClick = {
+                    scope.launch { snackbar.currentSnackbarData?.dismiss(); snackbar.showSnackbar("Disponibil cu planul complet API-Football") }
+                },
+            )
             Text(
                 longDayLabel(state.selectedDay),
                 fontWeight = FontWeight.SemiBold, fontSize = 14.sp, color = colors.onSurfaceVariant,
@@ -138,36 +154,6 @@ fun ExploreLeagueScreen(
             }
         }
     }
-}
-
-/** today ± 7 days; the free API plan only serves the three middle ones, the rest show what is cached. */
-@Composable
-private fun DayChips(days: List<LocalDate>, selected: LocalDate, today: LocalDate, onSelect: (LocalDate) -> Unit) {
-    val listState = rememberLazyListState()
-    // start scrolled so that "today" is visible near the left edge
-    LaunchedEffect(Unit) { listState.scrollToItem((days.indexOf(today) - 1).coerceAtLeast(0)) }
-    LazyRow(
-        state = listState,
-        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        items(days) { day ->
-            FilterChip(
-                selected = day == selected,
-                onClick = { onSelect(day) },
-                label = { Text(chipLabel(day, today)) },
-            )
-        }
-    }
-}
-
-private val CHIP_DAYS = listOf("Lun", "Mar", "Mie", "Joi", "Vin", "Sâm", "Dum")
-
-private fun chipLabel(day: LocalDate, today: LocalDate): String = when (day) {
-    today -> "Azi"
-    today.minusDays(1) -> "Ieri"
-    today.plusDays(1) -> "Mâine"
-    else -> "${CHIP_DAYS[day.dayOfWeek.value - 1]} ${day.dayOfMonth}"
 }
 
 @Composable

@@ -98,8 +98,11 @@ class ExploreLeagueViewModel @Inject constructor(
         load()
     }
 
+    /** False for days outside FREE_PLAN_DATE_WINDOW: their chips are disabled and never trigger a request. */
+    fun isDayAvailable(day: LocalDate): Boolean = AppTime.isInFreePlanWindow(day, _state.value.today)
+
     fun selectDay(day: LocalDate) {
-        if (day == _state.value.selectedDay) return
+        if (day == _state.value.selectedDay || !isDayAvailable(day)) return
         _state.update { it.copy(selectedDay = day) }
         load()
     }

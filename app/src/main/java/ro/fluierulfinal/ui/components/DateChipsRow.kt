@@ -17,7 +17,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.disabled
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import ro.fluierulfinal.ui.theme.Spacing
@@ -27,11 +30,21 @@ import java.time.LocalDate
 private val WEEKDAYS = listOf("LUN", "MAR", "MIE", "JOI", "VIN", "SÂM", "DUM")
 
 /**
- * Day picker for Explorează: "Ieri", "Azi", "Mâine", then weekday + day number.
+ * Day picker for Explorează: short day name on top ("IERI", "AZI", "MÂINE", "SÂM"...), day number below.
  * The selected day is filled with the accent; the list starts scrolled to "Azi".
+ * Days for which [isEnabled] is false are dimmed and cannot be selected; tapping one calls [onDisabledClick]
+ * (e.g. to explain that the free API plan does not cover it).
  */
 @Composable
-fun DateChipsRow(days: List<LocalDate>, selected: LocalDate, today: LocalDate, onSelect: (LocalDate) -> Unit, modifier: Modifier = Modifier) {
+fun DateChipsRow(
+    days: List<LocalDate>,
+    selected: LocalDate,
+    today: LocalDate,
+    onSelect: (LocalDate) -> Unit,
+    modifier: Modifier = Modifier,
+    isEnabled: (LocalDate) -> Boolean = { true },
+    onDisabledClick: (LocalDate) -> Unit = {},
+) {
     val listState = rememberLazyListState()
     LaunchedEffect(Unit) { listState.scrollToItem((days.indexOf(today) - 1).coerceAtLeast(0)) }
     LazyRow(
@@ -40,12 +53,15 @@ fun DateChipsRow(days: List<LocalDate>, selected: LocalDate, today: LocalDate, o
         contentPadding = PaddingValues(horizontal = Spacing.md, vertical = Spacing.sm),
         horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
     ) {
-        items(days) { day -> DateChip(day, today, day == selected) { onSelect(day) } }
+        items(days) { day ->
+            val enabled = isEnabled(day)
+            DateChip(day, today, day == selected, enabled) { if (enabled) onSelect(day) else onDisabledClick(day) }
+        }
     }
 }
 
 @Composable
-private fun DateChip(day: LocalDate, today: LocalDate, selected: Boolean, onClick: () -> Unit) {
+private fun DateChip(day: LocalDate, today: LocalDate, selected: Boolean, enabled: Boolean, onClick: () -> Unit) {
     val colors = MaterialTheme.colorScheme
     val (top, bottom) = when (day) {
         today -> "AZI" to "${day.dayOfMonth}"
@@ -59,8 +75,10 @@ private fun DateChip(day: LocalDate, today: LocalDate, selected: Boolean, onClic
     val fg2 = if (selected) colors.onPrimary else colors.onSurfaceVariant
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.width(56.dp).clip(RoundedCornerShape(14.dp)).background(bg)
-            .clickable(role = Role.Tab, onClick = onClick).padding(vertical = Spacing.sm),
+        modifier = Modifier.width(56.dp).alpha(if (enabled) 1f else 0.38f).clip(RoundedCornerShape(14.dp)).background(bg)
+            .clickable(role = Role.Tab, onClickLabel = if (enabled) null else "Indisponibil", onClick = onClick)
+            .semantics { if (!enabled) disabled() }
+            .padding(vertical = Spacing.sm),
     ) {
         Text(top, style = MaterialTheme.scoreType.leagueHeader, color = fg2)
         Text(bottom, style = MaterialTheme.scoreType.scoreList, color = fg)
@@ -72,6 +90,7 @@ private fun DateChip(day: LocalDate, today: LocalDate, selected: Boolean, onClic
 private fun DateChipsRowPreview() {
     val today = LocalDate.of(2026, 11, 19)
     PreviewSurface(androidx.compose.foundation.isSystemInDarkTheme()) {
-        DateChipsRow((-3..4).map { today.plusDays(it.toLong()) }, selected = today, today = today, onSelect = {})
+        DateChipsRow((-3..4).map { today.plusDays(it.toLong()) }, selected = today, today = today, onSelect = {},
+            isEnabled = { kotlin.math.abs(it.toEpochDay() - today.toEpochDay()) <= 1 })
     }
 }
