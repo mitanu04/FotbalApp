@@ -28,6 +28,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import ro.fluierulfinal.ui.debug.ApiCoverageScreen
 import ro.fluierulfinal.ui.placeholder.PlaceholderScreen
+import ro.fluierulfinal.ui.settings.AccountSection
 import ro.fluierulfinal.ui.settings.SettingsLink
 import ro.fluierulfinal.ui.settings.SettingsScreen
 import kotlin.reflect.KClass
@@ -47,7 +48,11 @@ private val TABS = listOf(
  * deeper screens (details, placeholders) take the whole height and have a back arrow.
  */
 @Composable
-fun AppNavHost(navController: NavHostController = rememberNavController()) {
+fun AppNavHost(
+    userEmail: String?,
+    onSignOut: () -> Unit,
+    navController: NavHostController = rememberNavController(),
+) {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val destination = backStackEntry?.destination
     val showBottomBar = TABS.any { tab -> destination?.hasRoute(tab.routeClass) == true }
@@ -102,6 +107,7 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
                     debugTools = listOf(
                         SettingsLink("Test acoperire API", "Plan, id-uri ligi, coverage (3 cereri)", null) { navController.navigate(ApiCoverageRoute) },
                     ),
+                    accountSection = { AccountSection(userEmail, onSignOut) },
                 )
             }
 

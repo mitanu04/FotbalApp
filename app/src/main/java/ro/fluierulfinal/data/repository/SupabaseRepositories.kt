@@ -2,6 +2,11 @@ package ro.fluierulfinal.data.repository
 
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.auth
+import io.github.jan.supabase.auth.exception.AuthErrorCode
+import io.github.jan.supabase.auth.exception.AuthRestException
+import io.github.jan.supabase.auth.exception.AuthWeakPasswordException
+import io.github.jan.supabase.exceptions.HttpRequestException
+import io.ktor.client.plugins.HttpRequestTimeoutException
 import io.github.jan.supabase.auth.providers.builtin.Email
 import io.github.jan.supabase.auth.status.SessionStatus
 import io.github.jan.supabase.postgrest.from
@@ -44,20 +49,42 @@ class AuthRepositoryImpl @Inject constructor(
         .map { it is SessionStatus.Initializing }
         .stateIn(scope, SharingStarted.Eagerly, true)
 
-    override suspend fun signIn(email: String, password: String) {
+    override suspend fun signIn(email: String, password: String) = mapAuthErrors {
         supabase.auth.signInWith(Email) {
             this.email = email
             this.password = password
         }
     }
 
-    override suspend fun signUp(email: String, password: String): Boolean {
+    override suspend fun signUp(email: String, password: String): Boolean = mapAuthErrors {
         supabase.auth.signUpWith(Email) {
             this.email = email
             this.password = password
         }
         // With "Confirm email" on, Supabase creates the account but no session until the link is clicked.
-        return supabase.auth.currentSessionOrNull() != null
+        supabase.auth.currentSessionOrNull() != null
+    }
+
+    /** Translates Supabase exceptions into [AuthException], so screens never see backend types. */
+    private suspend fun <T> mapAuthErrors(block: suspend () -> T): T = try {
+        block()
+    } catch (e: AuthWeakPasswordException) {
+        throw AuthException(AuthError.WEAK_PASSWORD, e)
+    } catch (e: AuthRestException) {
+        val error = when (e.errorCode) {
+            AuthErrorCode.InvalidCredentials -> AuthError.INVALID_CREDENTIALS
+            AuthErrorCode.EmailNotConfirmed -> AuthError.EMAIL_NOT_CONFIRMED
+            AuthErrorCode.UserAlreadyExists, AuthErrorCode.EmailExists -> AuthError.USER_ALREADY_EXISTS
+            AuthErrorCode.WeakPassword -> AuthError.WEAK_PASSWORD
+            AuthErrorCode.EmailAddressInvalid, AuthErrorCode.ValidationFailed -> AuthError.INVALID_EMAIL
+            AuthErrorCode.OverRequestRateLimit, AuthErrorCode.OverEmailSendRateLimit -> AuthError.RATE_LIMITED
+            else -> AuthError.UNKNOWN
+        }
+        throw AuthException(error, e)
+    } catch (e: HttpRequestException) {
+        throw AuthException(AuthError.NETWORK, e)
+    } catch (e: HttpRequestTimeoutException) {
+        throw AuthException(AuthError.NETWORK, e)
     }
 
     override suspend fun signOut() {

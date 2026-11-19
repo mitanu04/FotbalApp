@@ -10,7 +10,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dagger.hilt.android.AndroidEntryPoint
-import ro.fluierulfinal.navigation.AppNavHost
+import ro.fluierulfinal.navigation.AppRoot
 import ro.fluierulfinal.ui.theme.FluierulFinalTheme
 import ro.fluierulfinal.ui.theme.ThemeController
 import ro.fluierulfinal.ui.theme.isDark
@@ -39,7 +39,7 @@ class MainActivity : ComponentActivity() {
                 onDispose {}
             }
             FluierulFinalTheme(mode) {
-                AppNavHost()
+                AppRoot()
             }
         }
     }

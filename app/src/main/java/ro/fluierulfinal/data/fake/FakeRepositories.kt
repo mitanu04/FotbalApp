@@ -5,6 +5,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import ro.fluierulfinal.data.repository.AuthError
+import ro.fluierulfinal.data.repository.AuthException
 import ro.fluierulfinal.data.repository.AuthRepository
 import ro.fluierulfinal.data.repository.AuthUser
 import ro.fluierulfinal.data.repository.DataSource
@@ -67,7 +69,7 @@ class FakeAuthRepository @Inject constructor() : AuthRepository {
 
     override suspend fun signIn(email: String, password: String) {
         delay(FAKE_DELAY_MS)
-        if (password.length < 6) throw IllegalArgumentException("Email sau parolă greșită.")
+        if (password.length < 6) throw AuthException(AuthError.INVALID_CREDENTIALS)
         _user.value = AuthUser("fake-user", email)
     }
 

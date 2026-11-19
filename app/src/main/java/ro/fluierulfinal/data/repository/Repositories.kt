@@ -14,6 +14,20 @@ import java.time.LocalDate
 /** The signed-in user, as far as the app cares. */
 data class AuthUser(val id: String, val email: String?)
 
+/** Why an auth action failed, independent of the backend (Supabase or fake). The UI turns it into text. */
+enum class AuthError {
+    INVALID_CREDENTIALS,
+    EMAIL_NOT_CONFIRMED,
+    USER_ALREADY_EXISTS,
+    WEAK_PASSWORD,
+    INVALID_EMAIL,
+    RATE_LIMITED,
+    NETWORK,
+    UNKNOWN,
+}
+
+class AuthException(val error: AuthError, cause: Throwable? = null) : Exception(error.name, cause)
+
 interface AuthRepository {
     /** null = signed out. Screens observe it to switch between Login and the app. */
     val currentUser: StateFlow<AuthUser?>
@@ -21,9 +35,13 @@ interface AuthRepository {
     /** True until the saved session (if any) has been loaded at app start. */
     val isRestoringSession: StateFlow<Boolean>
 
+    /** @throws AuthException */
     suspend fun signIn(email: String, password: String)
 
-    /** Returns true if the account is ready to use, false if the user must first confirm their email. */
+    /**
+     * Returns true if the account is ready to use, false if the user must first confirm their email.
+     * @throws AuthException
+     */
     suspend fun signUp(email: String, password: String): Boolean
 
     suspend fun signOut()
