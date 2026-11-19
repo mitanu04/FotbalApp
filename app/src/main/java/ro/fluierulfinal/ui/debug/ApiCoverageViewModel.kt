@@ -11,10 +11,12 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import ro.fluierulfinal.data.cache.CacheDataSource
 import ro.fluierulfinal.data.remote.ApiFootballService
 import ro.fluierulfinal.data.remote.mapper.toDomain
 import ro.fluierulfinal.data.remote.orThrow
 import ro.fluierulfinal.domain.model.League
+import java.time.Clock
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.ZonedDateTime
@@ -32,12 +34,14 @@ data class ApiCoverageUiState(
  * which plan we are on, the real league ids, the current season, the `coverage` flags,
  * and whether the free plan accepts /fixtures with league + season + date.
  *
- * Cost: 3 requests (/status is free). The result is saved, so the check is not repeated by accident;
- * from step 4 it is stored in the Supabase `leagues` table instead of SharedPreferences.
+ * Cost: 3 requests (/status is free). The leagues with their coverage are saved in the Supabase
+ * `leagues` table; the text report is also kept on the phone, so the check is not repeated by accident.
  */
 @HiltViewModel
 class ApiCoverageViewModel @Inject constructor(
     private val api: ApiFootballService,
+    private val cache: CacheDataSource,
+    private val clock: Clock,
     @ApplicationContext context: Context,
 ) : ViewModel() {
 
@@ -90,6 +94,17 @@ class ApiCoverageViewModel @Inject constructor(
         val laLiga = api.leagues(id = 140).orThrow().single().toDomain()
             ?: error("La Liga has no season marked as current")
         appendCoverage(laLiga)
+
+        // Save the leagues (with coverage) in the Supabase `leagues` table, so the app reads them
+        // from there (LeagueRepository, 7-day cache) instead of asking the API again.
+        val saved = runCatching { cache.putLeagues(romanianLeagues + laLiga, clock.instant()) }
+        appendLine(
+            saved.fold(
+                onSuccess = { "Salvat în Supabase (tabelul leagues): ${(romanianLeagues + laLiga).joinToString { "${it.id}_${it.season}" }}" },
+                onFailure = { "NU s-a salvat în Supabase: ${it.message}" },
+            )
+        )
+        appendLine()
 
         // 4. Does the free plan accept league + season + date for the current season?  (1 request)
         val today = LocalDate.now(ZONE)
