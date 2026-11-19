@@ -67,13 +67,17 @@ fun FluierulFinalTheme(
     mode: ThemeMode = ThemeMode.SYSTEM,
     content: @Composable () -> Unit,
 ) {
-    val dark = when (mode) {
-        ThemeMode.SYSTEM -> isSystemInDarkTheme()
-        ThemeMode.LIGHT -> false
-        ThemeMode.DARK -> true
-    }
+    val dark = mode.isDark()
     MaterialTheme(
         colorScheme = if (dark) DarkColors else LightColors,
         content = content,
     )
+}
+
+/** Whether this mode means dark colors right now (SYSTEM asks the phone). */
+@Composable
+fun ThemeMode.isDark(): Boolean = when (this) {
+    ThemeMode.SYSTEM -> isSystemInDarkTheme()
+    ThemeMode.LIGHT -> false
+    ThemeMode.DARK -> true
 }

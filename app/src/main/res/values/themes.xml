@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
-    <style name="Theme.FluierulFinal" parent="android:Theme.Material.NoActionBar" />
+    <!-- Window theme shown for a split second before Compose draws: same background as the
+         Compose theme, so there is no grey flash at start-up. Dark variant in values-night. -->
+    <style name="Theme.FluierulFinal" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/window_background</item>
+    </style>
 </resources>
