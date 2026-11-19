@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -24,6 +26,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil3.compose.SubcomposeAsyncImage
+import coil3.compose.SubcomposeAsyncImageContent
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import ro.fluierulfinal.R
@@ -34,14 +37,20 @@ import ro.fluierulfinal.domain.model.Team
 import ro.fluierulfinal.ui.theme.BarlowCondensed
 import ro.fluierulfinal.ui.theme.FluierulFinalTheme
 import ro.fluierulfinal.ui.theme.ThemeMode
+import ro.fluierulfinal.ui.theme.extendedColors
 import java.time.Instant
 import java.time.LocalDate
 
 // Small UI pieces shared by several screens.
 
 /**
- * Team logo loaded by Coil from [logoUrl], fading in when it arrives (crossfade).
- * While loading, offline, or without a logo: a circle with the team's initials.
+ * Team (or league) logo, loaded by Coil from [logoUrl] with a crossfade.
+ *
+ * - Dark mode: the logo sits on a light rounded plate ([ExtendedColors.logoBackdrop]), because many
+ *   logos are dark or green (Ligue 1, Premier League, Champions League...) and vanish on our background.
+ *   Light mode: no plate. The box is always [size] x [size], so the layout never moves.
+ * - While loading, offline, without a URL, or when the API sends its generic "no logo" picture
+ *   (turned into an error by LogoPlaceholderInterceptor): a circle with the team's initials.
  */
 @Composable
 fun TeamLogo(name: String, logoUrl: String?, size: Dp = 24.dp, modifier: Modifier = Modifier) {
@@ -49,6 +58,11 @@ fun TeamLogo(name: String, logoUrl: String?, size: Dp = 24.dp, modifier: Modifie
         InitialsCircle(name, size, modifier)
         return
     }
+    val backdrop = MaterialTheme.extendedColors.logoBackdrop
+    val hasBackdrop = backdrop.alpha > 0f
+    // 4dp padding and 10dp corners as specified, scaled down for very small logos so they stay readable
+    val inset = if (hasBackdrop) minOf(4.dp, size * 0.15f) else 0.dp
+    val corner = minOf(10.dp, size * 0.3f)
     SubcomposeAsyncImage(
         model = ImageRequest.Builder(LocalContext.current).data(logoUrl).crossfade(true).build(),
         contentDescription = "Sigla $name",
@@ -56,15 +70,22 @@ fun TeamLogo(name: String, logoUrl: String?, size: Dp = 24.dp, modifier: Modifie
         modifier = modifier.size(size),
         loading = { InitialsCircle(name, size) },
         error = { InitialsCircle(name, size) },
+        success = {
+            val imageScope = this   // the Box below has its own scope; the image content needs this one
+            Box(
+                Modifier.size(size).clip(RoundedCornerShape(corner)).background(backdrop).padding(inset),
+                contentAlignment = Alignment.Center,
+            ) { imageScope.SubcomposeAsyncImageContent() }
+        },
     )
 }
 
-/** League logo (same fallback as [TeamLogo]). */
+/** League logo (same plate and fallback as [TeamLogo]). */
 @Composable
 fun LeagueLogo(name: String, logoUrl: String?, size: Dp = 20.dp, modifier: Modifier = Modifier) =
     TeamLogo(name, logoUrl, size, modifier)
 
-/** Circle with up to two initials, e.g. "FC" for "FC Botosani", in neutral theme colors. */
+/** Our placeholder: circle in surfaceVariant with up to two initials in onSurface, e.g. "FC" for "FC Botosani". */
 @Composable
 private fun InitialsCircle(name: String, size: Dp, modifier: Modifier = Modifier) {
     val initials = name.filter { it.isUpperCase() }.take(2).ifEmpty { name.take(1) }
@@ -73,7 +94,7 @@ private fun InitialsCircle(name: String, size: Dp, modifier: Modifier = Modifier
         contentAlignment = Alignment.Center,
     ) {
         Text(
-            initials, color = MaterialTheme.colorScheme.onSurfaceVariant, fontFamily = BarlowCondensed,
+            initials, color = MaterialTheme.colorScheme.onSurface, fontFamily = BarlowCondensed,
             fontWeight = FontWeight.Bold, fontSize = MaterialTheme.typography.labelSmall.fontSize * (size.value / 24f),
         )
     }
