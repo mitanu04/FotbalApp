@@ -110,8 +110,9 @@ fun FavoritesScreen(
                     onClick = onAddTeam,
                     icon = { Icon(AppIcons.add, null) },
                     text = { Text("Adaugă echipă") },
-                    containerColor = colors.primaryContainer,
-                    contentColor = colors.onPrimaryContainer,
+                    // main action: gold in both themes (tertiary), so the brand stays recognizable
+                    containerColor = colors.tertiary,
+                    contentColor = colors.onTertiary,
                 )
             }
         },

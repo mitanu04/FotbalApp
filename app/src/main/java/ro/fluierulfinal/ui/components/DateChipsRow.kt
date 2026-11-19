@@ -53,9 +53,10 @@ private fun DateChip(day: LocalDate, today: LocalDate, selected: Boolean, onClic
         today.plusDays(1) -> "MÂINE" to "${day.dayOfMonth}"
         else -> WEEKDAYS[day.dayOfWeek.value - 1] to "${day.dayOfMonth}"
     }
-    val bg = if (selected) colors.primaryContainer else colors.surface
-    val fg = if (selected) colors.onPrimaryContainer else colors.onSurface
-    val fg2 = if (selected) colors.onPrimaryContainer else colors.onSurfaceVariant
+    // selected day: the theme accent (gold in dark, grass green in light)
+    val bg = if (selected) colors.primary else colors.surface
+    val fg = if (selected) colors.onPrimary else colors.onSurface
+    val fg2 = if (selected) colors.onPrimary else colors.onSurfaceVariant
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.width(56.dp).clip(RoundedCornerShape(14.dp)).background(bg)

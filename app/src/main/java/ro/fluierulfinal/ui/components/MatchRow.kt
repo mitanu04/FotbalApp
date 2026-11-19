@@ -49,7 +49,7 @@ private val TIME = DateTimeFormatter.ofPattern("HH:mm")
 /**
  * One fixture in a list: kick-off time or live minute on the left, the two teams with 24dp logos,
  * the score right-aligned, and optionally a star (favorite). The score is the hero: Barlow Condensed,
- * tabular figures, animated when it changes. A live fixture shows its minute in the live color
+ * tabular figures, animated when it changes. A live fixture shows its minute (not the score) in the live color
  * next to a pulsing dot.
  *
  * The row has no background of its own: it sits on a card ([MatchCard]).
@@ -65,7 +65,7 @@ fun MatchRow(
     val colors = MaterialTheme.colorScheme
     val live = fixture.status == FixtureStatus.LIVE
     val liveColor = MaterialTheme.extendedColors.live
-    val scoreColor = if (live) liveColor else colors.onSurface
+    val scoreColor = colors.onSurface   // the score keeps the normal text color; live red is only for the minute
     val finished = fixture.status == FixtureStatus.FINISHED
     // after the final whistle, the losing side is dimmed so the result reads at a glance
     val homeDim = finished && (fixture.score.home ?: 0) < (fixture.score.away ?: 0)

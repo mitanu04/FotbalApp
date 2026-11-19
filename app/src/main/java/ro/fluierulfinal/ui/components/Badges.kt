@@ -37,6 +37,7 @@ import ro.fluierulfinal.ui.theme.LocalReduceMotion
 import ro.fluierulfinal.ui.theme.Spacing
 import ro.fluierulfinal.ui.theme.extendedColors
 import ro.fluierulfinal.ui.theme.scoreType
+import ro.fluierulfinal.ui.theme.textOn
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
@@ -71,7 +72,7 @@ fun FormPills(results: List<FormResult>, modifier: Modifier = Modifier) {
                 FormResult.LOSS -> ext.loss
             }
             Box(Modifier.size(24.dp).clip(RoundedCornerShape(6.dp)).background(fill), contentAlignment = Alignment.Center) {
-                Text(r.letter, fontFamily = BarlowCondensed, fontWeight = FontWeight.Bold, color = ext.onPill, style = MaterialTheme.typography.labelLarge)
+                Text(r.letter, fontFamily = BarlowCondensed, fontWeight = FontWeight.Bold, color = textOn(fill), style = MaterialTheme.typography.labelLarge)
             }
         }
     }
@@ -89,7 +90,7 @@ fun RatingBadge(rating: Double, modifier: Modifier = Modifier) {
     }
     Text(
         String.format(Locale.US, "%.1f", rating),
-        style = MaterialTheme.scoreType.minute, color = ext.onPill, textAlign = TextAlign.Center,
+        style = MaterialTheme.scoreType.minute, color = textOn(fill), textAlign = TextAlign.Center,
         modifier = modifier.clip(RoundedCornerShape(6.dp)).background(fill).padding(horizontal = 6.dp, vertical = 2.dp),
     )
 }
@@ -136,7 +137,7 @@ fun ScoreBoard(fixture: Fixture, modifier: Modifier = Modifier) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.width(132.dp)) {
             if (fixture.score.home != null) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    val c = if (live) ext.live else colors.onSurface
+                    val c = colors.onSurface   // the score keeps the normal text color; red is only for the LIVE badge
                     AnimatedBigScore(fixture.score.home, c)
                     Text(" – ", style = MaterialTheme.scoreType.scoreLarge, color = colors.onSurfaceVariant)
                     AnimatedBigScore(fixture.score.away, c)

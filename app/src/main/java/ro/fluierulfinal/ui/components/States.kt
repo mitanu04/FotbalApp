@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -55,9 +56,21 @@ fun EmptyState(icon: Painter, title: String, text: String, modifier: Modifier = 
         Text(title, style = MaterialTheme.typography.titleLarge, color = colors.onBackground, textAlign = TextAlign.Center, modifier = Modifier.padding(top = Spacing.lg))
         Text(text, style = MaterialTheme.typography.bodyLarge, color = colors.onSurfaceVariant, textAlign = TextAlign.Center, modifier = Modifier.padding(top = Spacing.sm))
         if (action != null) {
-            Button(onClick = onAction, modifier = Modifier.padding(top = Spacing.xl)) { Text(action) }
+            PrimaryActionButton(action, onAction, Modifier.padding(top = Spacing.xl))
         }
     }
+}
+
+/**
+ * The main action of a screen (sign in, add a team): gold in both themes (`tertiary`),
+ * with dark text, so the brand color is the same in light and dark.
+ */
+@Composable
+fun PrimaryActionButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true, content: (@Composable () -> Unit)? = null) {
+    Button(
+        onClick = onClick, enabled = enabled, modifier = modifier,
+        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary, contentColor = MaterialTheme.colorScheme.onTertiary),
+    ) { if (content != null) content() else Text(text) }
 }
 
 /** Error screen with a retry button. */
