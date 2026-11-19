@@ -16,10 +16,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import ro.fluierulfinal.ui.components.PrimaryActionButton
 import ro.fluierulfinal.ui.components.WhistleLogo
 
 /** Login / Register on one screen; a link at the bottom switches between the two modes. */
@@ -52,75 +53,85 @@ fun LoginScreen(viewModel: AuthViewModel = hiltViewModel()) {
     var showPassword by rememberSaveable { mutableStateOf(false) }
     val passwordTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation()
 
-    Column(
-        modifier = Modifier.fillMaxSize().background(colors.background).safeDrawingPadding().imePadding()
-            .verticalScroll(rememberScrollState()).padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-    ) {
-        Spacer(Modifier.height(32.dp))
-        WhistleLogo(Modifier.size(56.dp).clip(RoundedCornerShape(16.dp)).background(colors.primaryContainer).padding(12.dp))
-        Text("Fluierul Final", fontSize = 28.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 12.dp))
-        Text(
-            if (state.isRegister) "Creează-ți un cont" else "Autentifică-te ca să-ți vezi echipele favorite",
-            color = colors.onSurfaceVariant, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 4.dp, bottom = 24.dp),
-        )
+    // Surface sets the default content color (onBackground) for every Text below; without it,
+    // a Text with no explicit color falls back to black, invisible on the dark background.
+    Surface(color = colors.background, contentColor = colors.onBackground, modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier.fillMaxSize().safeDrawingPadding().imePadding()
+                .verticalScroll(rememberScrollState()).padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+        ) {
+            Spacer(Modifier.height(32.dp))
+            WhistleLogo(Modifier.size(56.dp).clip(RoundedCornerShape(16.dp)).background(colors.primaryContainer).padding(12.dp))
+            Text(
+                "Fluierul Final", style = MaterialTheme.typography.headlineMedium, color = colors.onBackground,
+                modifier = Modifier.padding(top = 12.dp),
+            )
+            Text(
+                if (state.isRegister) "Creează-ți un cont" else "Autentifică-te ca să-ți vezi echipele favorite",
+                color = colors.onSurfaceVariant, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 4.dp, bottom = 24.dp),
+            )
 
-        OutlinedTextField(
-            value = state.email, onValueChange = viewModel::onEmailChange,
-            label = { Text("Email") }, singleLine = true, enabled = !state.loading,
-            isError = state.fieldErrors.email != null,
-            supportingText = state.fieldErrors.email?.let { { Text(it) } },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
-            modifier = Modifier.fillMaxWidth(),
-        )
-        OutlinedTextField(
-            value = state.password, onValueChange = viewModel::onPasswordChange,
-            label = { Text("Parolă") }, singleLine = true, enabled = !state.loading,
-            isError = state.fieldErrors.password != null,
-            supportingText = state.fieldErrors.password?.let { { Text(it) } },
-            visualTransformation = passwordTransformation,
-            trailingIcon = {
-                TextButton(onClick = { showPassword = !showPassword }) { Text(if (showPassword) "Ascunde" else "Arată") }
-            },
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Password,
-                imeAction = if (state.isRegister) ImeAction.Next else ImeAction.Done,
-            ),
-            keyboardActions = KeyboardActions(onDone = { focus.clearFocus(); viewModel.submit() }),
-            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-        )
-        if (state.isRegister) {
             OutlinedTextField(
-                value = state.confirmPassword, onValueChange = viewModel::onConfirmPasswordChange,
-                label = { Text("Confirmă parola") }, singleLine = true, enabled = !state.loading,
-                isError = state.fieldErrors.confirmPassword != null,
-                supportingText = state.fieldErrors.confirmPassword?.let { { Text(it) } },
+                value = state.email, onValueChange = viewModel::onEmailChange,
+                label = { Text("Email") }, singleLine = true, enabled = !state.loading,
+                isError = state.fieldErrors.email != null,
+                supportingText = state.fieldErrors.email?.let { { Text(it) } },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
+                modifier = Modifier.fillMaxWidth(),
+            )
+            OutlinedTextField(
+                value = state.password, onValueChange = viewModel::onPasswordChange,
+                label = { Text("Parolă") }, singleLine = true, enabled = !state.loading,
+                isError = state.fieldErrors.password != null,
+                supportingText = state.fieldErrors.password?.let { { Text(it) } },
                 visualTransformation = passwordTransformation,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
+                trailingIcon = {
+                    TextButton(onClick = { showPassword = !showPassword }) { Text(if (showPassword) "Ascunde" else "Arată") }
+                },
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Password,
+                    imeAction = if (state.isRegister) ImeAction.Next else ImeAction.Done,
+                ),
                 keyboardActions = KeyboardActions(onDone = { focus.clearFocus(); viewModel.submit() }),
                 modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
             )
-        }
-
-        // Server messages: an error (red) or an info such as "check your email" (accent color).
-        state.error?.let { Message(it, colors.error, colors.errorContainer) }
-        state.info?.let { Message(it, colors.onSecondaryContainer, colors.secondaryContainer) }
-
-        Button(
-            onClick = { focus.clearFocus(); viewModel.submit() },
-            enabled = !state.loading,
-            modifier = Modifier.fillMaxWidth().padding(top = 16.dp).height(50.dp),
-        ) {
-            if (state.loading) {
-                CircularProgressIndicator(Modifier.size(22.dp), color = colors.onPrimary, strokeWidth = 2.dp)
-            } else {
-                Text(if (state.isRegister) "Creează cont" else "Intră în cont", fontSize = 16.sp)
+            if (state.isRegister) {
+                OutlinedTextField(
+                    value = state.confirmPassword, onValueChange = viewModel::onConfirmPasswordChange,
+                    label = { Text("Confirmă parola") }, singleLine = true, enabled = !state.loading,
+                    isError = state.fieldErrors.confirmPassword != null,
+                    supportingText = state.fieldErrors.confirmPassword?.let { { Text(it) } },
+                    visualTransformation = passwordTransformation,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(onDone = { focus.clearFocus(); viewModel.submit() }),
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                )
             }
-        }
 
-        TextButton(onClick = viewModel::toggleMode, enabled = !state.loading, modifier = Modifier.padding(top = 8.dp)) {
-            Text(if (state.isRegister) "Ai deja cont? Autentifică-te" else "Nu ai cont? Creează unul")
+            // Server messages: an error (red) or an info such as "check your email" (accent color).
+            state.error?.let { Message(it, colors.error, colors.errorContainer) }
+            state.info?.let { Message(it, colors.onSecondaryContainer, colors.secondaryContainer) }
+
+            // main action: gold in both themes (tertiary), see PrimaryActionButton
+            val submitLabel = if (state.isRegister) "Creează cont" else "Intră în cont"
+            PrimaryActionButton(
+                text = submitLabel,
+                onClick = { focus.clearFocus(); viewModel.submit() },
+                enabled = !state.loading,
+                modifier = Modifier.fillMaxWidth().padding(top = 16.dp).height(50.dp),
+            ) {
+                if (state.loading) {
+                    CircularProgressIndicator(Modifier.size(22.dp), color = colors.onTertiary, strokeWidth = 2.dp)
+                } else {
+                    Text(submitLabel, style = MaterialTheme.typography.labelLarge.copy(fontSize = 16.sp))
+                }
+            }
+
+            TextButton(onClick = viewModel::toggleMode, enabled = !state.loading, modifier = Modifier.padding(top = 8.dp)) {
+                Text(if (state.isRegister) "Ai deja cont? Autentifică-te" else "Nu ai cont? Creează unul")
+            }
         }
     }
 }
