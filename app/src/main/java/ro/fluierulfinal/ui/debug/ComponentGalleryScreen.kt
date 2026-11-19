@@ -37,6 +37,7 @@ import ro.fluierulfinal.ui.components.ScoreBoard
 import ro.fluierulfinal.ui.components.SkeletonMatchRow
 import ro.fluierulfinal.ui.components.StatComparisonBar
 import ro.fluierulfinal.ui.theme.FluierulFinalTheme
+import ro.fluierulfinal.ui.theme.LocalAppPalette
 import ro.fluierulfinal.ui.theme.Spacing
 import ro.fluierulfinal.ui.theme.ThemeMode
 import java.time.LocalDate
@@ -57,8 +58,9 @@ fun ComponentGalleryScreen(onBack: () -> Unit) {
         },
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState())) {
+            val palette = LocalAppPalette.current
             ThemeMode.entries.filter { it != ThemeMode.SYSTEM }.forEach { mode ->
-                FluierulFinalTheme(mode) { GallerySection(if (mode == ThemeMode.LIGHT) "LIGHT" else "DARK") }
+                FluierulFinalTheme(mode, palette) { GallerySection(if (mode == ThemeMode.LIGHT) "LIGHT" else "DARK") }
             }
         }
     }

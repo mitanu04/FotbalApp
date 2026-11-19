@@ -37,13 +37,17 @@ val AppShapes = Shapes(
 /** True when the user turned animations off ("Remove animations" in Android accessibility settings). */
 val LocalReduceMotion = staticCompositionLocalOf { false }
 
+/** The palette currently in use (e.g. for the component gallery, which redraws it in both modes). */
+val LocalAppPalette = staticCompositionLocalOf { AppPalette.GAZON }
+
 /**
- * App theme. [mode] comes from [ThemeController]; SYSTEM follows the phone setting.
+ * App theme. [mode] and [palette] come from [ThemeController]; SYSTEM follows the phone setting.
  * Dynamic color (wallpaper-based, Android 12+) is deliberately not used: the brand colors always apply.
  */
 @Composable
 fun FluierulFinalTheme(
     mode: ThemeMode = ThemeMode.SYSTEM,
+    palette: AppPalette = AppPalette.GAZON,
     content: @Composable () -> Unit,
 ) {
     val dark = mode.isDark()
@@ -52,12 +56,19 @@ fun FluierulFinalTheme(
         Settings.Global.getFloat(context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f
     }
     CompositionLocalProvider(
-        LocalExtendedColors provides if (dark) DarkExtendedColors else LightExtendedColors,
+        LocalExtendedColors provides when (palette) {
+            AppPalette.GAZON -> if (dark) GazonDarkExtendedColors else GazonLightExtendedColors
+            AppPalette.STADION -> if (dark) StadionDarkExtendedColors else StadionLightExtendedColors
+        },
+        LocalAppPalette provides palette,
         LocalScoreTypography provides AppScoreTypography,
         LocalReduceMotion provides reduceMotion,
     ) {
         MaterialTheme(
-            colorScheme = if (dark) DarkColors else LightColors,
+            colorScheme = when (palette) {
+                AppPalette.GAZON -> if (dark) GazonDarkColors else GazonLightColors
+                AppPalette.STADION -> if (dark) StadionDarkColors else StadionLightColors
+            },
             typography = AppTypography,
             shapes = AppShapes,
             content = content,

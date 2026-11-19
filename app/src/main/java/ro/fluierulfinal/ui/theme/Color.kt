@@ -16,7 +16,7 @@ import androidx.core.graphics.ColorUtils
 private val NightGrass = Color(0xFF0F1A16)
 private val Gold = Color(0xFFFFC94D)
 
-val DarkColors = darkColorScheme(
+val GazonDarkColors = darkColorScheme(
     primary = Gold,
     onPrimary = NightGrass,
     primaryContainer = Color(0xFF3A3218),
@@ -46,7 +46,7 @@ val DarkColors = darkColorScheme(
     inversePrimary = Color(0xFF1E6B45),
 )
 
-val LightColors = lightColorScheme(
+val GazonLightColors = lightColorScheme(
     primary = Color(0xFF1E6B45),                  // grass green: text, active icons, selected chips (6.5:1 on white)
     onPrimary = Color.White,
     primaryContainer = Color(0xFFDCEFE3),
@@ -99,7 +99,7 @@ data class ExtendedColors(
     val skeletonHighlight: Color, // shimmer highlight
 )
 
-val DarkExtendedColors = ExtendedColors(
+val GazonDarkExtendedColors = ExtendedColors(
     live = Color(0xFFFF6B6B),
     liveContainer = Color(0xFF3A1A1A),
     win = Color(0xFF3DDC84),
@@ -117,7 +117,7 @@ val DarkExtendedColors = ExtendedColors(
     skeletonHighlight = Color(0xFF2B4038),
 )
 
-val LightExtendedColors = ExtendedColors(
+val GazonLightExtendedColors = ExtendedColors(
     live = Color(0xFFD63A3A),
     liveContainer = Color(0xFFFBE4E4),
     win = Color(0xFF1E8E4F),
@@ -135,7 +135,111 @@ val LightExtendedColors = ExtendedColors(
     skeletonHighlight = Color(0xFFF6F9F5),
 )
 
-val LocalExtendedColors = staticCompositionLocalOf { DarkExtendedColors }
+val LocalExtendedColors = staticCompositionLocalOf { GazonDarkExtendedColors }
+
+// ---------------------------------------------------------------------------------------------
+// Second palette, chosen in Setări → Aspect: "Stadion" ("Nocturnă de stadion"), cool dark blue-grey
+// with an electric lime accent. Same slots as Gazon, so every screen works with both.
+// ---------------------------------------------------------------------------------------------
+
+private val Ink = Color(0xFF0D1117)
+private val Lime = Color(0xFFD7FF3A)
+
+val StadionDarkColors = darkColorScheme(
+    primary = Lime,
+    onPrimary = Ink,
+    primaryContainer = Color(0xFF2B3A12),
+    onPrimaryContainer = Lime,
+    secondaryContainer = Color(0xFF2B3A12),
+    onSecondaryContainer = Lime,
+    tertiary = Lime,                              // main action (primary button, FAB)
+    onTertiary = Ink,
+    background = Ink,
+    onBackground = Color(0xFFE8EDF3),
+    surface = Color(0xFF151B23),
+    onSurface = Color(0xFFE8EDF3),
+    surfaceVariant = Color(0xFF1E2631),
+    onSurfaceVariant = Color(0xFF8B98A9),         // 5.9:1 on surface
+    surfaceContainer = Color(0xFF151B23),
+    surfaceContainerLow = Color(0xFF151B23),
+    surfaceContainerHigh = Color(0xFF1E2631),
+    surfaceContainerHighest = Color(0xFF1E2631),
+    outline = Color(0xFF2A3441),
+    outlineVariant = Color(0xFF2A3441),
+    error = Color(0xFFFF4D4F),
+    onError = Ink,
+    errorContainer = Color(0xFF3A1A1F),
+    onErrorContainer = Color(0xFFFF8A8C),
+    inverseSurface = Color(0xFFE8EDF3),
+    inverseOnSurface = Ink,
+    inversePrimary = Color(0xFF3F6212),
+)
+
+val StadionLightColors = lightColorScheme(
+    primary = Color(0xFF3F6212),                  // dark lime: 7.1:1 on white
+    onPrimary = Color.White,
+    primaryContainer = Color(0xFFE9F7C2),
+    onPrimaryContainer = Ink,
+    secondaryContainer = Color(0xFFE9F7C2),
+    onSecondaryContainer = Ink,
+    tertiary = Lime,                              // only as background of the main action
+    onTertiary = Ink,
+    background = Color(0xFFF5F7FA),
+    onBackground = Ink,
+    surface = Color.White,
+    onSurface = Ink,
+    surfaceVariant = Color(0xFFEEF2F6),
+    onSurfaceVariant = Color(0xFF5B6776),         // 5.8:1 on white
+    surfaceContainer = Color.White,
+    surfaceContainerLow = Color.White,
+    surfaceContainerHigh = Color.White,
+    surfaceContainerHighest = Color(0xFFEEF2F6),
+    outline = Color(0xFFDCE3EA),
+    outlineVariant = Color(0xFFDCE3EA),
+    error = Color(0xFFC2272D),
+    onError = Color.White,
+    errorContainer = Color(0xFFFDE8E8),
+    onErrorContainer = Color(0xFF9B1C1F),
+    inverseSurface = Ink,
+    inverseOnSurface = Color(0xFFE8EDF3),
+    inversePrimary = Lime,
+)
+
+val StadionDarkExtendedColors = ExtendedColors(
+    live = Color(0xFFFF4D4F),
+    liveContainer = Color(0xFF3A1A1F),
+    win = Color(0xFF22C55E),
+    draw = Color(0xFF94A3B8),
+    loss = Color(0xFFEF4444),
+    yellowCard = Color(0xFFFACC15),
+    redCard = Color(0xFFE11D48),
+    ratingPoor = Color(0xFFEF4444),
+    ratingAverage = Color(0xFFF97316),
+    ratingGood = Color(0xFF22C55E),
+    ratingGreat = Color(0xFF3B82F6),
+    textDisabled = Color(0xFF5B6776),
+    logoBackdrop = Color(0xFFE8EDF3).copy(alpha = 0.92f),
+    skeleton = Color(0xFF1E2631),
+    skeletonHighlight = Color(0xFF2A3441),
+)
+
+val StadionLightExtendedColors = ExtendedColors(
+    live = Color(0xFFC2272D),
+    liveContainer = Color(0xFFFDE8E8),
+    win = Color(0xFF15803D),
+    draw = Color(0xFF64748B),
+    loss = Color(0xFFB91C1C),
+    yellowCard = Color(0xFFEAB308),
+    redCard = Color(0xFFE11D48),
+    ratingPoor = Color(0xFFEF4444),
+    ratingAverage = Color(0xFFF97316),
+    ratingGood = Color(0xFF22C55E),
+    ratingGreat = Color(0xFF3B82F6),
+    textDisabled = Color(0xFF94A3B8),
+    logoBackdrop = Color.Transparent,
+    skeleton = Color(0xFFEEF2F6),
+    skeletonHighlight = Color(0xFFF8FAFC),
+)
 
 private val DarkText = Color(0xFF0F1A16)
 

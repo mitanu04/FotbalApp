@@ -29,6 +29,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             val mode by themeController.mode.collectAsStateWithLifecycle()
+            val palette by themeController.palette.collectAsStateWithLifecycle()
             val dark = mode.isDark()
             // Status/navigation bar icons must contrast with our theme, which (from S10) may differ
             // from the phone's own setting: light icons on dark theme, dark icons on light theme.
@@ -38,7 +39,7 @@ class MainActivity : ComponentActivity() {
                 enableEdgeToEdge(statusBarStyle = style, navigationBarStyle = style)
                 onDispose {}
             }
-            FluierulFinalTheme(mode) {
+            FluierulFinalTheme(mode, palette) {
                 AppRoot()
             }
         }

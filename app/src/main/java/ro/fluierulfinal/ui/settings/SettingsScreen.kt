@@ -52,6 +52,7 @@ fun SettingsScreen(
             contentPadding = tabListPadding(padding, horizontal = 16.dp),
         ) {
             item { accountSection() }
+            item { AppearanceSection() }
             item { Section("Ecranele din planul aplicației", plannedScreens) }
             item { Section("Dezvoltare", debugTools) }
             item {
