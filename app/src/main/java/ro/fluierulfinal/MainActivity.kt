@@ -2,45 +2,51 @@ package ro.fluierulfinal
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.viewModels
-import androidx.compose.runtime.collectAsState
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.getValue
-import ro.fluierulfinal.ui.detail.MatchDetailScreen
-import ro.fluierulfinal.ui.home.HomeScreen
-import ro.fluierulfinal.ui.home.HomeViewModel
-import ro.fluierulfinal.ui.league.LeagueScreen
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import dagger.hilt.android.AndroidEntryPoint
 import ro.fluierulfinal.ui.theme.FluierulFinalTheme
+import ro.fluierulfinal.ui.theme.ThemeController
+import javax.inject.Inject
 
+/**
+ * The only Activity. @AndroidEntryPoint lets Hilt inject fields such as [themeController].
+ */
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
-    // ViewModel-ul supraviețuiește rotirii ecranului, deci starea nu se pierde.
-    private val vm: HomeViewModel by viewModels()
+    @Inject lateinit var themeController: ThemeController
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            FluierulFinalTheme {
-                val state by vm.state.collectAsState()
-                // Navigare simplă: meci deschis → detalii; ligă deschisă → pagina ligii; altfel ecranul principal.
-                // Mai târziu, când avem mai multe ecrane, trecem pe Navigation Compose.
-                // Ordinea contează: un meci deschis din pagina ligii stă „deasupra” ei,
-                // așa că „înapoi” din meci te întoarce în pagina ligii.
-                val matchId = state.openMatchId
-                val leagueId = state.openLeagueId
-                when {
-                    matchId != null -> {
-                        BackHandler { vm.closeMatch() }
-                        MatchDetailScreen(matchId, vm, onBack = vm::closeMatch)
-                    }
-                    leagueId != null -> {
-                        BackHandler { vm.closeLeague() }
-                        LeagueScreen(leagueId, vm, onBack = vm::closeLeague)
-                    }
-                    else -> HomeScreen(vm)
+            val mode by themeController.mode.collectAsStateWithLifecycle()
+            FluierulFinalTheme(mode) {
+                // Temporary root screen; replaced by the navigation graph with the bottom bar in step 5.
+                Column(
+                    modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).padding(24.dp),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Text("Fluierul Final", fontSize = 28.sp, fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onBackground)
+                    Text("S8 în lucru: navigația vine la pasul 5.",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }
