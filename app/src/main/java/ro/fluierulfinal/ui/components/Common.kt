@@ -5,7 +5,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -22,59 +21,53 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.SubcomposeAsyncImage
-import ro.fluierulfinal.data.League
-import ro.fluierulfinal.data.Match
-import ro.fluierulfinal.data.MatchStatus
-import ro.fluierulfinal.data.Team
 import java.time.LocalDate
 
-// Bucăți mici de UI folosite pe mai multe ecrane.
+// Small UI pieces shared by several screens.
 
 /**
- * Sigla echipei, descărcată de Coil din [Team.logoUrl].
- * Cât timp se încarcă, dacă nu merge internetul sau dacă echipa nu are siglă,
- * arătăm cercul colorat cu inițialele.
+ * Team logo loaded by Coil from [logoUrl]. While it loads, if there is no internet,
+ * or if the team has no logo, a colored circle with the team's initials is shown instead.
  */
 @Composable
-fun TeamCrest(team: Team, size: Dp = 22.dp) {
-    if (team.logoUrl == null) {
-        InitialsCrest(team, size)
+fun TeamLogo(name: String, logoUrl: String?, size: Dp = 22.dp) {
+    if (logoUrl == null) {
+        InitialsCircle(name, size)
         return
     }
     SubcomposeAsyncImage(
-        model = team.logoUrl,
-        contentDescription = "Sigla ${team.name}",
+        model = logoUrl,
+        contentDescription = "Sigla $name",
         contentScale = ContentScale.Fit,
         modifier = Modifier.size(size),
-        loading = { InitialsCrest(team, size) },
-        error = { InitialsCrest(team, size) },
+        loading = { InitialsCircle(name, size) },
+        error = { InitialsCircle(name, size) },
     )
 }
 
-/** Cerc colorat cu inițialele echipei (ex. „B” pentru Barcelona). */
+/** League logo (same fallback as [TeamLogo]). */
 @Composable
-private fun InitialsCrest(team: Team, size: Dp) {
-    val initials = team.name.filter { it.isUpperCase() }.take(2).ifEmpty { team.name.take(1) }
+fun LeagueLogo(name: String, logoUrl: String?, size: Dp = 28.dp) = TeamLogo(name, logoUrl, size)
+
+/** Circle with up to two initials, e.g. "FC" for "FC Botosani". Its color is derived from the name. */
+@Composable
+private fun InitialsCircle(name: String, size: Dp) {
+    val initials = name.filter { it.isUpperCase() }.take(2).ifEmpty { name.take(1) }
+    val color = PALETTE[(name.hashCode() and Int.MAX_VALUE) % PALETTE.size]
     Box(
-        modifier = Modifier.size(size).background(Color(team.color), CircleShape),
+        modifier = Modifier.size(size).background(color, CircleShape),
         contentAlignment = Alignment.Center,
     ) {
         Text(initials, color = Color.White, fontWeight = FontWeight.Bold, fontSize = (size.value * 0.38f).sp)
     }
 }
 
-/** Pătrățel colorat cu prescurtarea ligii. */
-@Composable
-fun LeagueBadge(league: League, size: Dp = 28.dp) {
-    Box(
-        modifier = Modifier.size(size).background(Color(league.color), RoundedCornerShape(size / 4)),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(league.abbr, color = Color.White, fontWeight = FontWeight.Bold, fontSize = (size.value * 0.42f).sp)
-    }
-}
+private val PALETTE = listOf(
+    Color(0xFFC8102E), Color(0xFF1D4FA3), Color(0xFF2E8B57), Color(0xFF5B2A86),
+    Color(0xFFE8482C), Color(0xFF0B6BCB), Color(0xFF8A1538), Color(0xFF14427A),
+)
 
-/** Iconiță de lupă desenată cu Canvas (fără bibliotecă de iconițe). */
+/** Magnifier icon drawn with Canvas (no icon library needed). */
 @Composable
 fun SearchIcon(color: Color, modifier: Modifier = Modifier) {
     Canvas(modifier.size(22.dp)) {
@@ -85,7 +78,7 @@ fun SearchIcon(color: Color, modifier: Modifier = Modifier) {
     }
 }
 
-/** Iconiță de televizor. */
+/** TV icon. */
 @Composable
 fun TvIcon(color: Color, modifier: Modifier = Modifier) {
     Canvas(modifier.size(22.dp)) {
@@ -97,7 +90,7 @@ fun TvIcon(color: Color, modifier: Modifier = Modifier) {
     }
 }
 
-/** Săgeată mică (sus sau jos) pentru a strânge/desface o ligă. */
+/** Small chevron (up or down) for collapsing/expanding a section. */
 @Composable
 fun ChevronIcon(up: Boolean, color: Color, modifier: Modifier = Modifier) {
     Canvas(modifier.size(14.dp)) {
@@ -108,7 +101,7 @@ fun ChevronIcon(up: Boolean, color: Color, modifier: Modifier = Modifier) {
     }
 }
 
-/** Logo-ul: un fluier stilizat, în culoarea textului din bara de sus (alb, ca logo-ul Sofascore). */
+/** App logo: a stylized whistle in the top bar text color. */
 @Composable
 fun WhistleLogo(modifier: Modifier = Modifier) {
     val gold = MaterialTheme.colorScheme.onPrimaryContainer
@@ -124,7 +117,7 @@ fun WhistleLogo(modifier: Modifier = Modifier) {
 private val DAYS = listOf("Luni", "Marți", "Miercuri", "Joi", "Vineri", "Sâmbătă", "Duminică")
 private val MONTHS = listOf("ian", "feb", "mar", "apr", "mai", "iun", "iul", "aug", "sep", "oct", "nov", "dec")
 
-/** „Azi”, „Ieri”, „Mâine” sau „Mie, 28 oct”. */
+/** "Azi", "Ieri", "Mâine" or e.g. "Mie, 28 oct" (UI text, so in Romanian). */
 fun shortDayLabel(day: LocalDate, today: LocalDate): String = when (day) {
     today -> "Azi"
     today.minusDays(1) -> "Ieri"
@@ -132,13 +125,6 @@ fun shortDayLabel(day: LocalDate, today: LocalDate): String = when (day) {
     else -> "${DAYS[day.dayOfWeek.value - 1].take(3)}, ${day.dayOfMonth} ${MONTHS[day.monthValue - 1]}"
 }
 
-/** „Luni, 26 oct”. */
+/** e.g. "Luni, 26 oct". */
 fun longDayLabel(day: LocalDate): String =
     "${DAYS[day.dayOfWeek.value - 1]}, ${day.dayOfMonth} ${MONTHS[day.monthValue - 1]}"
-
-/** Ce scrie sub oră: minutul la live, „Final” la terminat, nimic la cele care urmează. */
-fun statusLabel(match: Match): String = when (match.status) {
-    MatchStatus.LIVE -> if (match.minute == 45) "Pauză" else "${match.minute}'"
-    MatchStatus.FINISHED -> "Final"
-    MatchStatus.UPCOMING -> ""
-}

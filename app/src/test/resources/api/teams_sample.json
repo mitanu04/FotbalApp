@@ -1,0 +1,75 @@
+{
+ "get": "teams",
+ "parameters": {
+  "league": "283",
+  "season": "2024"
+ },
+ "errors": [],
+ "results": 3,
+ "paging": {
+  "current": 1,
+  "total": 1
+ },
+ "response": [
+  {
+   "team": {
+    "id": 559,
+    "name": "FCSB",
+    "code": "STE",
+    "country": "Romania",
+    "founded": 1947,
+    "national": false,
+    "logo": "https://media.api-sports.io/football/teams/559.png"
+   },
+   "venue": {
+    "id": 1326,
+    "name": "Arena Naţională",
+    "address": "Bulevardul Basarabia 37-39",
+    "city": "Bucureşti",
+    "capacity": 55611,
+    "surface": "grass",
+    "image": "https://media.api-sports.io/football/venues/1326.png"
+   }
+  },
+  {
+   "team": {
+    "id": 2246,
+    "name": "CFR 1907 Cluj",
+    "code": "CLU",
+    "country": "Romania",
+    "founded": 1907,
+    "national": false,
+    "logo": "https://media.api-sports.io/football/teams/2246.png"
+   },
+   "venue": {
+    "id": 1311,
+    "name": "Stadionul Dr. Constantin Rădulescu",
+    "address": "Strada Romulus Vuia, nr. 23",
+    "city": "Cluj-Napoca",
+    "capacity": 23500,
+    "surface": "grass",
+    "image": "https://media.api-sports.io/football/venues/1311.png"
+   }
+  },
+  {
+   "team": {
+    "id": 6231,
+    "name": "Rapid",
+    "code": "RAP",
+    "country": "Romania",
+    "founded": null,
+    "national": false,
+    "logo": "https://media.api-sports.io/football/teams/6231.png"
+   },
+   "venue": {
+    "id": 19516,
+    "name": "Superbet Arena-Giulești",
+    "address": "Calea Giulești 18",
+    "city": "București",
+    "capacity": 14073,
+    "surface": "grass",
+    "image": "https://media.api-sports.io/football/venues/19516.png"
+   }
+  }
+ ]
+}
