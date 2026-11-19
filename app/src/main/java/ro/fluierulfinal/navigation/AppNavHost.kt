@@ -27,6 +27,8 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import ro.fluierulfinal.ui.debug.ApiCoverageScreen
+import ro.fluierulfinal.ui.explore.ExploreLeagueScreen
+import ro.fluierulfinal.ui.explore.ExploreScreen
 import ro.fluierulfinal.ui.favorites.AddFavoriteScreen
 import ro.fluierulfinal.ui.favorites.FavoritesScreen
 import ro.fluierulfinal.ui.placeholder.PlaceholderScreen
@@ -85,7 +87,7 @@ fun AppNavHost(
         ) {
             val back: () -> Unit = { navController.popBackStack() }
 
-            // --- bottom bar (Explorează is filled in step 8) ---
+            // --- bottom bar ---
             composable<FavoritesRoute> {
                 FavoritesScreen(
                     onAddTeam = { navController.navigate(AddFavoriteRoute) },
@@ -93,7 +95,7 @@ fun AppNavHost(
                 )
             }
             composable<ExploreRoute> {
-                PlaceholderScreen("Explorează", "S8 (pasul 8)", "Alegi liga, apoi ziua, apoi vezi meciurile.")
+                ExploreScreen(onLeagueClick = { leagueId -> navController.navigate(ExploreLeagueRoute(leagueId)) })
             }
             composable<TicketRoute> {
                 PlaceholderScreen("Biletul meu", "S12", "Meciurile de pe bilet, programul de urmărire și starea fiecărui pariu, live.")
@@ -117,6 +119,9 @@ fun AppNavHost(
             }
 
             // --- deeper screens ---
+            composable<ExploreLeagueRoute> {
+                ExploreLeagueScreen(onBack = back, onFixtureClick = { id -> navController.navigate(MatchDetailsRoute(id)) })
+            }
             composable<AddFavoriteRoute> {
                 AddFavoriteScreen(onBack = back)
             }

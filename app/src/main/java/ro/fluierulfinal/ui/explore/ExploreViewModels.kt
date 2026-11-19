@@ -1,0 +1,133 @@
+package ro.fluierulfinal.ui.explore
+
+import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import androidx.navigation.toRoute
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import ro.fluierulfinal.data.remote.ApiFootballException
+import ro.fluierulfinal.data.repository.DataSource
+import ro.fluierulfinal.data.repository.DayNotAvailableException
+import ro.fluierulfinal.data.repository.FixtureRepository
+import ro.fluierulfinal.data.repository.LeagueRepository
+import ro.fluierulfinal.domain.model.AppTime
+import ro.fluierulfinal.domain.model.Fixture
+import ro.fluierulfinal.domain.model.FixtureStatus
+import ro.fluierulfinal.domain.model.League
+import ro.fluierulfinal.navigation.ExploreLeagueRoute
+import java.time.Clock
+import java.time.LocalDate
+import javax.inject.Inject
+
+/** Step 1 of Explorează: the list of supported leagues (fixed, costs no request). */
+@HiltViewModel
+class ExploreViewModel @Inject constructor(leagues: LeagueRepository) : ViewModel() {
+    val leagues: List<League> = leagues.supportedLeagues()
+}
+
+/** The three groups shown on the fixtures list, in this order. */
+data class FixtureGroups(
+    val live: List<Fixture>,
+    val scheduled: List<Fixture>,    // includes postponed
+    val finished: List<Fixture>,     // includes cancelled
+) {
+    val isEmpty get() = live.isEmpty() && scheduled.isEmpty() && finished.isEmpty()
+
+    companion object {
+        fun of(fixtures: List<Fixture>) = FixtureGroups(
+            live = fixtures.filter { it.status == FixtureStatus.LIVE },
+            scheduled = fixtures.filter { it.status == FixtureStatus.SCHEDULED || it.status == FixtureStatus.POSTPONED },
+            finished = fixtures.filter { it.status == FixtureStatus.FINISHED || it.status == FixtureStatus.CANCELLED },
+        )
+    }
+}
+
+sealed interface FixturesState {
+    data object Loading : FixturesState
+    data class Loaded(val groups: FixtureGroups, val source: DataSource) : FixturesState
+    data class NotAvailable(val message: String) : FixturesState   // outside the free plan, nothing cached
+    data class Error(val message: String) : FixturesState
+}
+
+data class ExploreLeagueUiState(
+    val league: League,
+    val today: LocalDate,
+    val days: List<LocalDate>,
+    val selectedDay: LocalDate,
+    val fixtures: FixturesState = FixturesState.Loading,
+)
+
+/**
+ * Steps 2 and 3 of Explorează: pick a day (today ± 7), see that day's fixtures grouped by status.
+ * The league id comes from the navigation route (ExploreLeagueRoute), read through SavedStateHandle.
+ */
+@HiltViewModel
+class ExploreLeagueViewModel @Inject constructor(
+    savedStateHandle: SavedStateHandle,
+    leagues: LeagueRepository,
+    private val fixtures: FixtureRepository,
+    clock: Clock,
+) : ViewModel() {
+
+    private val leagueId = savedStateHandle.toRoute<ExploreLeagueRoute>().leagueId
+
+    private val _state: MutableStateFlow<ExploreLeagueUiState>
+    val state: StateFlow<ExploreLeagueUiState>
+
+    private var loadJob: Job? = null
+
+    init {
+        val today = AppTime.today(clock.instant())
+        val league = leagues.supportedLeagues().first { it.id == leagueId }
+        _state = MutableStateFlow(
+            ExploreLeagueUiState(
+                league = league,
+                today = today,
+                days = (-DAYS_AROUND..DAYS_AROUND).map { today.plusDays(it.toLong()) },
+                selectedDay = today,
+            )
+        )
+        state = _state.asStateFlow()
+        load()
+    }
+
+    fun selectDay(day: LocalDate) {
+        if (day == _state.value.selectedDay) return
+        _state.update { it.copy(selectedDay = day) }
+        load()
+    }
+
+    fun retry() = load()
+
+    private fun load() {
+        loadJob?.cancel()   // switching days quickly: only the last chosen day matters
+        val day = _state.value.selectedDay
+        _state.update { it.copy(fixtures = FixturesState.Loading) }
+        loadJob = viewModelScope.launch {
+            val result = try {
+                val r = fixtures.fixtures(leagueId, day)
+                FixturesState.Loaded(FixtureGroups.of(r.fixtures), r.source)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: DayNotAvailableException) {
+                FixturesState.NotAvailable(e.message ?: "")
+            } catch (e: ApiFootballException) {
+                FixturesState.Error("API-Football: ${e.message}")
+            } catch (e: Exception) {
+                FixturesState.Error("Nu am putut încărca meciurile. Verifică internetul.")
+            }
+            _state.update { if (it.selectedDay == day) it.copy(fixtures = result) else it }
+        }
+    }
+
+    companion object {
+        const val DAYS_AROUND = 7
+    }
+}

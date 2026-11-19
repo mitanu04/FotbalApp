@@ -14,6 +14,7 @@ import kotlinx.serialization.Serializable
 
 // --- reachable from the bottom-bar screens ---
 @Serializable data object AddFavoriteRoute
+@Serializable data class ExploreLeagueRoute(val leagueId: Int)
 @Serializable data class MatchDetailsRoute(val fixtureId: Int)
 @Serializable data class TeamDetailsRoute(val teamId: Int)
 @Serializable data class PlayerRoute(val playerId: Int)
