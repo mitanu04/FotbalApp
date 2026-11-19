@@ -116,7 +116,7 @@ class FavoritesRepositoryImpl @Inject constructor(
 
     override suspend fun add(team: Team, leagueId: Int?) {
         if (_favorites.value.any { it.teamId == team.id }) return
-        val favorite = Favorite(team.id, team.name, team.logoUrl, leagueId, addedAt = clock.instant())
+        val favorite = Favorite(team.id, team.name, team.country, team.logoUrl, leagueId, addedAt = clock.instant())
         change({ listOf(favorite) + it }) { table.insert(favorite.toRow()) }
     }
 

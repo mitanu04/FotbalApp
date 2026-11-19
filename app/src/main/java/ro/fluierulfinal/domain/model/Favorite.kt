@@ -3,12 +3,13 @@ package ro.fluierulfinal.domain.model
 import java.time.Instant
 
 /**
- * A team the user follows. Stored in Firestore at users/{uid}/favorites/{teamId}.
+ * A team the user follows. Stored in the Supabase table `favorites` (one row per user and team).
  * Name and logo are copied in, so the Favorite list can be shown without calling the API.
  */
 data class Favorite(
     val teamId: Int,
     val name: String,
+    val country: String?,
     val logoUrl: String?,
     val leagueId: Int?,             // the team's main league, if known
     val addedAt: Instant,

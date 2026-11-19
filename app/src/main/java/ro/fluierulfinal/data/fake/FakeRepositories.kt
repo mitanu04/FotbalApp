@@ -149,7 +149,7 @@ class FakeFavoritesRepository @Inject constructor(private val clock: Clock) : Fa
 
     override suspend fun add(team: Team, leagueId: Int?) {
         if (_favorites.value.any { it.teamId == team.id }) return
-        val favorite = Favorite(team.id, team.name, team.logoUrl, leagueId ?: FakeData.leagueOf(team.id), clock.instant())
+        val favorite = Favorite(team.id, team.name, team.country, team.logoUrl, leagueId ?: FakeData.leagueOf(team.id), clock.instant())
         _favorites.update { listOf(favorite) + it }
     }
 

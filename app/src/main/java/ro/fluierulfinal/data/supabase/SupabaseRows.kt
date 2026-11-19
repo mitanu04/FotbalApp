@@ -20,6 +20,7 @@ internal fun parseTimestamp(text: String): Instant = OffsetDateTime.parse(text).
 data class FavoriteRow(
     @SerialName("team_id") val teamId: Int,
     val name: String,
+    val country: String? = null,
     @SerialName("logo_url") val logoUrl: String? = null,
     @SerialName("league_id") val leagueId: Int? = null,
     @SerialName("added_at") val addedAt: String,
@@ -35,8 +36,8 @@ data class AlertsJson(
     val lineups: Boolean = false,
 )
 
-fun FavoriteRow.toDomain() = Favorite(teamId, name, logoUrl, leagueId, parseTimestamp(addedAt), alerts.toDomain())
-fun Favorite.toRow() = FavoriteRow(teamId, name, logoUrl, leagueId, addedAt.toString(), alerts.toJson())
+fun FavoriteRow.toDomain() = Favorite(teamId, name, country, logoUrl, leagueId, parseTimestamp(addedAt), alerts.toDomain())
+fun Favorite.toRow() = FavoriteRow(teamId, name, country, logoUrl, leagueId, addedAt.toString(), alerts.toJson())
 fun AlertsJson.toDomain() = AlertSettings(goalSound, redCardVibrate, penaltyVibrate, lineups)
 fun AlertSettings.toJson() = AlertsJson(goalSound, redCardVibrate, penaltyVibrate, lineups)
 

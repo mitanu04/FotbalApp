@@ -14,6 +14,7 @@ create table if not exists public.favorites (
     user_id    uuid        not null default auth.uid() references auth.users (id) on delete cascade,
     team_id    integer     not null,
     name       text        not null,
+    country    text,
     logo_url   text,
     league_id  integer,
     added_at   timestamptz not null default now(),
@@ -21,6 +22,9 @@ create table if not exists public.favorites (
         '{"goalSound": false, "redCardVibrate": false, "penaltyVibrate": false, "lineups": false}'::jsonb,
     primary key (user_id, team_id)
 );
+
+-- added in step 7 (for databases created before the column existed)
+alter table public.favorites add column if not exists country text;
 
 alter table public.favorites enable row level security;
 

@@ -27,6 +27,8 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import ro.fluierulfinal.ui.debug.ApiCoverageScreen
+import ro.fluierulfinal.ui.favorites.AddFavoriteScreen
+import ro.fluierulfinal.ui.favorites.FavoritesScreen
 import ro.fluierulfinal.ui.placeholder.PlaceholderScreen
 import ro.fluierulfinal.ui.settings.AccountSection
 import ro.fluierulfinal.ui.settings.SettingsLink
@@ -83,9 +85,12 @@ fun AppNavHost(
         ) {
             val back: () -> Unit = { navController.popBackStack() }
 
-            // --- bottom bar (Favorite and Explorează are filled in steps 7 and 8) ---
+            // --- bottom bar (Explorează is filled in step 8) ---
             composable<FavoritesRoute> {
-                PlaceholderScreen("Favorite", "S8 (pasul 7)", "Lista echipelor favorite, cu adăugare, setări de alerte și ștergere.")
+                FavoritesScreen(
+                    onAddTeam = { navController.navigate(AddFavoriteRoute) },
+                    onOpenTeam = { teamId -> navController.navigate(TeamDetailsRoute(teamId)) },
+                )
             }
             composable<ExploreRoute> {
                 PlaceholderScreen("Explorează", "S8 (pasul 8)", "Alegi liga, apoi ziua, apoi vezi meciurile.")
@@ -112,6 +117,9 @@ fun AppNavHost(
             }
 
             // --- deeper screens ---
+            composable<AddFavoriteRoute> {
+                AddFavoriteScreen(onBack = back)
+            }
             composable<MatchDetailsRoute> { entry ->
                 val route = entry.toRoute<MatchDetailsRoute>()
                 PlaceholderScreen("Detalii meci", "S10", "Scor, cronologia evenimentelor, statistici, echipe de start și butonul „Analiză AI”.\n(meciul #${route.fixtureId})", back)
