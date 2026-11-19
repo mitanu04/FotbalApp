@@ -8,18 +8,13 @@ plugins {
     alias(libs.plugins.hilt)
 }
 
-// The google-services plugin fails the build when google-services.json is missing,
-// so we only apply it once the Firebase config file has been added to app/.
-if (file("google-services.json").exists()) {
-    apply(plugin = libs.plugins.google.services.get().pluginId)
-}
-
-// The API-Football key lives in local.properties (never committed) and reaches the code as BuildConfig.API_FOOTBALL_KEY.
+// Secrets live in local.properties (never committed) and reach the code through BuildConfig:
+// API_FOOTBALL_KEY, SUPABASE_URL, SUPABASE_ANON_KEY.
 val localProps = Properties().apply {
     val f = rootProject.file("local.properties")
     if (f.exists()) f.inputStream().use { load(it) }
 }
-val apiFootballKey: String = localProps.getProperty("API_FOOTBALL_KEY", "")
+fun localProp(name: String): String = localProps.getProperty(name, "")
 
 android {
     namespace = "ro.fluierulfinal"
@@ -35,7 +30,9 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        buildConfigField("String", "API_FOOTBALL_KEY", "\"$apiFootballKey\"")
+        buildConfigField("String", "API_FOOTBALL_KEY", "\"${localProp("API_FOOTBALL_KEY")}\"")
+        buildConfigField("String", "SUPABASE_URL", "\"${localProp("SUPABASE_URL")}\"")
+        buildConfigField("String", "SUPABASE_ANON_KEY", "\"${localProp("SUPABASE_ANON_KEY")}\"")
     }
 
     buildTypes {
@@ -84,10 +81,12 @@ dependencies {
     implementation(libs.okhttp)
     implementation(libs.kotlinx.serialization.json)
 
-    // Firebase
-    implementation(platform(libs.firebase.bom))
-    implementation(libs.firebase.auth)
-    implementation(libs.firebase.firestore)
+    // Supabase: authentication + Postgres (favorites and the API cache). Ktor is its HTTP engine.
+    implementation(platform(libs.supabase.bom))
+    implementation(libs.supabase.auth)
+    implementation(libs.supabase.postgrest)
+    implementation(libs.supabase.compose.auth)
+    implementation(libs.ktor.client.okhttp)
 
     // Images (team and league logos)
     implementation(libs.coil.compose)
