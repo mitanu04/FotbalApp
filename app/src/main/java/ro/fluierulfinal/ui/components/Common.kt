@@ -16,10 +16,12 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil3.compose.SubcomposeAsyncImage
 import ro.fluierulfinal.data.League
 import ro.fluierulfinal.data.Match
 import ro.fluierulfinal.data.MatchStatus
@@ -28,9 +30,30 @@ import java.time.LocalDate
 
 // Bucăți mici de UI folosite pe mai multe ecrane.
 
-/** Cerc colorat cu inițialele echipei (în locul logo-ului, până îl luăm din API cu Coil). */
+/**
+ * Sigla echipei, descărcată de Coil din [Team.logoUrl].
+ * Cât timp se încarcă, dacă nu merge internetul sau dacă echipa nu are siglă,
+ * arătăm cercul colorat cu inițialele.
+ */
 @Composable
 fun TeamCrest(team: Team, size: Dp = 22.dp) {
+    if (team.logoUrl == null) {
+        InitialsCrest(team, size)
+        return
+    }
+    SubcomposeAsyncImage(
+        model = team.logoUrl,
+        contentDescription = "Sigla ${team.name}",
+        contentScale = ContentScale.Fit,
+        modifier = Modifier.size(size),
+        loading = { InitialsCrest(team, size) },
+        error = { InitialsCrest(team, size) },
+    )
+}
+
+/** Cerc colorat cu inițialele echipei (ex. „B” pentru Barcelona). */
+@Composable
+private fun InitialsCrest(team: Team, size: Dp) {
     val initials = team.name.filter { it.isUpperCase() }.take(2).ifEmpty { team.name.take(1) }
     Box(
         modifier = Modifier.size(size).background(Color(team.color), CircleShape),

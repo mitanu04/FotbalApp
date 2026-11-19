@@ -103,7 +103,8 @@ fun MatchDetailScreen(matchId: Int, vm: HomeViewModel, onBack: () -> Unit) {
                 TeamColumn(away, away.id in state.favoriteTeamIds, Modifier.weight(1f)) { vm.toggleFavorite(away.id) }
             }
 
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            // API-Football nu dă canalul TV; la meciurile reale rândul lipsește până îl avem
+            if (match.tvChannel.isNotEmpty()) Row(verticalAlignment = Alignment.CenterVertically) {
                 TvIcon(colors.onSurfaceVariant, Modifier.size(18.dp))
                 Text(match.tvChannel, color = colors.onSurfaceVariant, fontSize = 13.sp, modifier = Modifier.padding(start = 8.dp))
             }
@@ -120,7 +121,7 @@ fun MatchDetailScreen(matchId: Int, vm: HomeViewModel, onBack: () -> Unit) {
                 Section("Statistici") {
                     stats.forEach { StatRow(it) }
                 }
-            } else {
+            } else if (match.status == MatchStatus.UPCOMING) {
                 Section("Înainte de meci") {
                     Text(
                         "Echipele de start apar cu 30–60 de minute înainte de fluierul de start.",

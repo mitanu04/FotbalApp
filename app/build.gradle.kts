@@ -1,7 +1,16 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
 }
+
+// Cheia API-Football stă în local.properties (care NU intră în Git) și ajunge în cod ca BuildConfig.API_FOOTBALL_KEY.
+val localProps = Properties().apply {
+    val f = rootProject.file("local.properties")
+    if (f.exists()) f.inputStream().use { load(it) }
+}
+val apiFootballKey: String = localProps.getProperty("API_FOOTBALL_KEY", "")
 
 android {
     namespace = "ro.fluierulfinal"
@@ -17,6 +26,7 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        buildConfigField("String", "API_FOOTBALL_KEY", "\"$apiFootballKey\"")
     }
 
     buildTypes {
@@ -33,6 +43,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -45,7 +56,12 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    // Coil: încarcă imagini de pe internet (siglele echipelor) și le ține în cache
+    implementation(libs.coil.compose)
+    implementation(libs.coil.network.okhttp)
     testImplementation(libs.junit)
+    // pe Android org.json e inclus în sistem; în testele unitare (rulează pe JVM) trebuie adus separat
+    testImplementation(libs.json)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.espresso.core)

@@ -2,8 +2,8 @@ package ro.fluierulfinal.data
 
 import java.time.LocalDate
 
-// Clasele de date ale aplicației. Deocamdată le umplem cu date de exemplu (SampleData),
-// mai târziu le vom construi din răspunsurile API-Football.
+// Clasele de date ale aplicației. Le construim fie din răspunsurile API-Football (FixtureParser),
+// fie din datele de exemplu din MatchRepository.
 
 enum class MatchStatus { LIVE, FINISHED, UPCOMING }
 
@@ -25,7 +25,14 @@ data class Team(
     // coordonatele stadionului; null = încă nu le știm (în aplicație vin din /venues + Geocoder)
     val lat: Double? = null,
     val lng: Double? = null,
+    // sigla echipei; implicit o construim din id pentru echipele cu id din API (ex. „api529” = Barcelona)
+    val logoUrl: String? = apiLogoUrl(id),
 )
+
+/** Linkul siglei pe serverul de imagini API-Football, pentru id-urile de forma „api529”; altfel null. */
+fun apiLogoUrl(teamId: String): String? =
+    teamId.removePrefix("api").toIntOrNull()?.takeIf { teamId.startsWith("api") }
+        ?.let { "https://media.api-sports.io/football/teams/$it.png" }
 
 data class MatchEvent(
     val minute: Int,
@@ -47,6 +54,7 @@ data class Match(
     val awayGoals: Int? = null,
     val tvChannel: String,
     val events: List<MatchEvent> = emptyList(),
+    val fromApi: Boolean = false, // true = meci real din API-Football, false = meci de exemplu
 )
 
 data class StatLine(val label: String, val home: Int, val away: Int)

@@ -145,7 +145,7 @@ fun HomeScreen(vm: HomeViewModel) {
 
             item {
                 Text(
-                    "Date de exemplu. Meciurile reale vor veni din API-Football.",
+                    "Meciuri reale: API-Football (ieri, azi, mâine). Restul zilelor: date de exemplu.",
                     fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
                 )
@@ -241,18 +241,18 @@ private fun LiveTicker(live: List<Match>, vm: HomeViewModel) {
     }
 }
 
-/** Bara cu ligile alese de utilizator (în locul barei cu sporturi). */
+/** Bara cu ligile alese de utilizator; fiecare deschide pagina ligii. */
 @Composable
 private fun LeagueChips(state: HomeUiState, vm: HomeViewModel, onPickLeagues: () -> Unit) {
     LazyRow(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 12.dp),
     ) {
-        item { Chip("Toate ligile", selected = state.selectedLeagueId == null) { vm.selectLeague(null) } }
+        // apăsarea pe o ligă deschide pagina ei
         items(state.myLeagueIds) { id ->
             val league = vm.repository.league(id)
-            Chip(league.name, selected = state.selectedLeagueId == id, leading = { LeagueBadge(league, 18.dp) }) {
-                vm.selectLeague(id)
+            Chip(league.name, selected = false, leading = { LeagueBadge(league, 18.dp) }) {
+                vm.openLeague(id)
             }
         }
         item { Chip("+ Alege ligile", selected = false, accent = true, onClick = onPickLeagues) }
@@ -422,6 +422,7 @@ private fun ListControls(state: HomeUiState, vm: HomeViewModel, open: Boolean, o
         }
         if (!open) return@Column
         HorizontalDivider(color = colors.outline)
+        DataSourceNotice(state, vm)
 
         val liveCount = vm.repository.matches.count { it.date == state.day && it.status == MatchStatus.LIVE }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
@@ -445,6 +446,31 @@ private fun ListControls(state: HomeUiState, vm: HomeViewModel, open: Boolean, o
                         .padding(horizontal = 14.dp, vertical = 7.dp),
                 )
             }
+        }
+    }
+}
+
+/**
+ * Un rând mic sub selectorul de zi care spune de unde vin datele:
+ * se încarcă, a apărut o eroare (cu „Reîncearcă”), sau ziua e în afara planului gratuit.
+ */
+@Composable
+private fun DataSourceNotice(state: HomeUiState, vm: HomeViewModel) {
+    val colors = MaterialTheme.colorScheme
+    val (text, color, retry) = when {
+        state.error != null -> Triple(state.error, colors.error, true)
+        state.loading && !vm.repository.isLoaded(state.day) -> Triple("Se încarcă meciurile…", colors.onSurfaceVariant, false)
+        vm.isSampleDay(state) -> Triple(
+            "Date de exemplu: planul gratuit API-Football are acces doar la ieri, azi și mâine.",
+            colors.onSurfaceVariant, false,
+        )
+        else -> return
+    }
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 10.dp)) {
+        Text(text, fontSize = 12.sp, color = color, modifier = Modifier.weight(1f))
+        if (retry) {
+            Text("Reîncearcă", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = colors.primary,
+                modifier = Modifier.clip(RoundedCornerShape(8.dp)).clickable(onClick = vm::refresh).padding(8.dp))
         }
     }
 }
@@ -484,7 +510,7 @@ private fun LeagueHeader(leagueId: String, matches: List<Match>, collapsed: Bool
 
 /** Un rând de meci: ora + minutul, cele două echipe (cu cartonaș roșu), scorul, steaua. */
 @Composable
-private fun MatchRow(match: Match, state: HomeUiState, vm: HomeViewModel, modifier: Modifier) {
+fun MatchRow(match: Match, state: HomeUiState, vm: HomeViewModel, modifier: Modifier) {
     val colors = MaterialTheme.colorScheme
     val live = match.status == MatchStatus.LIVE
     val followed = vm.isFavoriteMatch(match, state)
@@ -576,7 +602,7 @@ private fun SearchBox(query: String, onQueryChange: (String) -> Unit, state: Hom
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.fillMaxWidth().clickable {
                         if (league.id !in state.myLeagueIds) vm.setMyLeagues(state.myLeagueIds + league.id)
-                        vm.selectLeague(league.id)
+                        vm.openLeague(league.id)
                         onQueryChange("")
                     }.padding(vertical = 10.dp, horizontal = 4.dp),
                 ) {

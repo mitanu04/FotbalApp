@@ -299,7 +299,7 @@ private fun PlanSlotRow(slot: PlanSlot, state: HomeUiState, vm: HomeViewModel) {
                     TvIcon(colors.onSurface, Modifier.size(16.dp))
                     Text("La TV", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(start = 4.dp))
                 }
-                Text(match.tvChannel, fontSize = 11.sp, color = colors.onSurfaceVariant, modifier = Modifier.padding(top = 3.dp))
+                Text(match.tvChannel.ifEmpty { "canal necunoscut" }, fontSize = 11.sp, color = colors.onSurfaceVariant, modifier = Modifier.padding(top = 3.dp))
             }
         }
     }

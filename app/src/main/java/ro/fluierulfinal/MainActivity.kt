@@ -11,6 +11,7 @@ import androidx.compose.runtime.getValue
 import ro.fluierulfinal.ui.detail.MatchDetailScreen
 import ro.fluierulfinal.ui.home.HomeScreen
 import ro.fluierulfinal.ui.home.HomeViewModel
+import ro.fluierulfinal.ui.league.LeagueScreen
 import ro.fluierulfinal.ui.theme.FluierulFinalTheme
 
 class MainActivity : ComponentActivity() {
@@ -24,14 +25,22 @@ class MainActivity : ComponentActivity() {
         setContent {
             FluierulFinalTheme {
                 val state by vm.state.collectAsState()
-                // Navigare simplă: dacă e un meci deschis, arătăm detaliile; altfel ecranul principal.
+                // Navigare simplă: meci deschis → detalii; ligă deschisă → pagina ligii; altfel ecranul principal.
                 // Mai târziu, când avem mai multe ecrane, trecem pe Navigation Compose.
-                val openId = state.openMatchId
-                if (openId != null) {
-                    BackHandler { vm.closeMatch() }
-                    MatchDetailScreen(openId, vm, onBack = vm::closeMatch)
-                } else {
-                    HomeScreen(vm)
+                // Ordinea contează: un meci deschis din pagina ligii stă „deasupra” ei,
+                // așa că „înapoi” din meci te întoarce în pagina ligii.
+                val matchId = state.openMatchId
+                val leagueId = state.openLeagueId
+                when {
+                    matchId != null -> {
+                        BackHandler { vm.closeMatch() }
+                        MatchDetailScreen(matchId, vm, onBack = vm::closeMatch)
+                    }
+                    leagueId != null -> {
+                        BackHandler { vm.closeLeague() }
+                        LeagueScreen(leagueId, vm, onBack = vm::closeLeague)
+                    }
+                    else -> HomeScreen(vm)
                 }
             }
         }

@@ -123,7 +123,7 @@ fun TvScheduleSheet(state: HomeUiState, vm: HomeViewModel, onDismiss: () -> Unit
                 }
                 Column {
                     Text("${vm.repository.team(m.homeId).name} – ${vm.repository.team(m.awayId).name}")
-                    Text(m.tvChannel, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                    Text(m.tvChannel.ifEmpty { "canal TV necunoscut" }, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
                 }
             }
             HorizontalDivider(color = MaterialTheme.colorScheme.outline)
