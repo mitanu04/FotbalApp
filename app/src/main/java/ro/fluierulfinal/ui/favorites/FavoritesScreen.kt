@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,6 +17,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -36,6 +40,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -266,8 +271,21 @@ private fun FavoritesSkeleton() {
 private fun AlertSettingsSheet(favorite: Favorite, onChange: (AlertSettings) -> Unit, onDismiss: () -> Unit) {
     val a = favorite.alerts
     val colors = MaterialTheme.colorScheme
-    ModalBottomSheet(onDismissRequest = onDismiss, containerColor = colors.surface) {
-        Column(Modifier.padding(horizontal = Spacing.xl).padding(bottom = Spacing.xxl)) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        containerColor = colors.surface,
+        // open fully, so all four toggles are visible at once
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        // insets are handled once, on the content below (navigationBarsPadding), never twice
+        contentWindowInsets = { WindowInsets(0) },
+    ) {
+        Column(
+            Modifier
+                .verticalScroll(rememberScrollState())   // small screens: scroll instead of cutting the text
+                .navigationBarsPadding()                  // stay above the gesture / navigation bar
+                .padding(horizontal = Spacing.xl)
+                .padding(bottom = Spacing.lg),
+        ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 TeamLogo(favorite.name, favorite.logoUrl, size = 40.dp)
                 Column(Modifier.padding(start = Spacing.md)) {
