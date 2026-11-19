@@ -2,6 +2,7 @@ package ro.fluierulfinal.ui.debug
 
 import android.content.Context
 import android.util.Log
+import androidx.core.content.edit
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -55,7 +56,7 @@ class ApiCoverageViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val report = buildReport()
-                prefs.edit().putString(KEY_REPORT, report).apply()
+                prefs.edit { putString(KEY_REPORT, report) }
                 Log.i(TAG, report)
                 _state.update { it.copy(report = report) }
             } catch (e: Exception) {
