@@ -6,10 +6,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -30,6 +30,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import ro.fluierulfinal.BuildConfig
+import ro.fluierulfinal.ui.components.tabListPadding
 
 /** One entry in a settings list: a title, an optional subtitle and a tag on the right (e.g. "S10"). */
 data class SettingsLink(val title: String, val subtitle: String?, val tag: String?, val onClick: () -> Unit)
@@ -45,18 +46,21 @@ fun SettingsScreen(
     debugTools: List<SettingsLink>,
     accountSection: @Composable () -> Unit = {},
 ) {
-    Scaffold(topBar = { TopAppBar(title = { Text("Setări") }) }) { padding ->
-        Column(
-            Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(horizontal = 16.dp)
+    Scaffold(topBar = { TopAppBar(title = { Text("Setări") }) }, contentWindowInsets = WindowInsets(0)) { padding ->
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = tabListPadding(padding, horizontal = 16.dp),
         ) {
-            accountSection()
-            Section("Ecranele din planul aplicației", plannedScreens)
-            Section("Dezvoltare", debugTools)
-            Text(
-                "Sursa datelor: " + if (BuildConfig.USE_FAKE_DATA) "date de test (USE_FAKE_DATA)" else "API-Football + Supabase",
-                fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(vertical = 16.dp),
-            )
+            item { accountSection() }
+            item { Section("Ecranele din planul aplicației", plannedScreens) }
+            item { Section("Dezvoltare", debugTools) }
+            item {
+                Text(
+                    "Sursa datelor: " + if (BuildConfig.USE_FAKE_DATA) "date de test (USE_FAKE_DATA)" else "API-Football + Supabase",
+                    fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(vertical = 16.dp),
+                )
+            }
         }
     }
 }

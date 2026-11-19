@@ -1,8 +1,7 @@
 package ro.fluierulfinal.navigation
 
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.consumeWindowInsets
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.MaterialTheme
@@ -11,6 +10,7 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -26,6 +26,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import ro.fluierulfinal.ui.components.AppIcons
+import ro.fluierulfinal.ui.components.LocalBottomBarPadding
 import ro.fluierulfinal.ui.debug.ApiCoverageScreen
 import ro.fluierulfinal.ui.debug.ComponentGalleryScreen
 import ro.fluierulfinal.ui.explore.ExploreLeagueScreen
@@ -97,80 +98,84 @@ fun AppNavHost(
             }
         },
     ) { innerPadding ->
-        NavHost(
-            navController = navController,
-            startDestination = FavoritesRoute,
-            modifier = Modifier.padding(innerPadding).consumeWindowInsets(innerPadding),
-        ) {
-            val back: () -> Unit = { navController.popBackStack() }
+        // Screens draw edge-to-edge (also behind the bottom bar); tab screens read the bar height
+        // from LocalBottomBarPadding and use it as bottom contentPadding of their lists.
+        CompositionLocalProvider(LocalBottomBarPadding provides innerPadding.calculateBottomPadding()) {
+            NavHost(
+                navController = navController,
+                startDestination = FavoritesRoute,
+                modifier = Modifier.fillMaxSize(),
+            ) {
+                val back: () -> Unit = { navController.popBackStack() }
 
-            // --- bottom bar ---
-            composable<FavoritesRoute> {
-                FavoritesScreen(
-                    onAddTeam = { navController.navigate(AddFavoriteRoute) },
-                    onOpenTeam = { teamId -> navController.navigate(TeamDetailsRoute(teamId)) },
-                )
-            }
-            composable<ExploreRoute> {
-                ExploreScreen(onLeagueClick = { leagueId -> navController.navigate(ExploreLeagueRoute(leagueId)) })
-            }
-            composable<TicketRoute> {
-                PlaceholderScreen("Biletul meu", "S12", "Meciurile de pe bilet, programul de urmărire și starea fiecărui pariu, live.")
-            }
-            composable<SettingsRoute> {
-                SettingsScreen(
-                    plannedScreens = listOf(
-                        SettingsLink("Detalii meci", "Scor, evenimente, statistici, echipe de start", "S10") { navController.navigate(MatchDetailsRoute(fixtureId = 0)) },
-                        SettingsLink("Detalii echipă", "Clasament, formă, golgheteri, meciuri viitoare", "S10") { navController.navigate(TeamDetailsRoute(teamId = 0)) },
-                        SettingsLink("Meciuri în zonă", "Listă și hartă cu stadioanele din rază (GPS)", "S10") { navController.navigate(NearbyMatchesRoute) },
-                        SettingsLink("Simulare", "Gol, roșu, penalty, echipe de start, pentru demo", "S10") { navController.navigate(SimulationRoute) },
-                        SettingsLink("Plan weekend", "Planul generat miercurea, editabil", "S12") { navController.navigate(WeekendPlanRoute) },
-                        SettingsLink("Analiză AI", "Analiza meciului și chat, din Detalii meci", "S12") { navController.navigate(AiAnalysisRoute(fixtureId = 0)) },
-                        SettingsLink("Jucător", "Profilul unui jucător", "S12") { navController.navigate(PlayerRoute(playerId = 0)) },
-                    ),
-                    debugTools = listOf(
-                        SettingsLink("Test acoperire API", "Plan, id-uri ligi, coverage (3 cereri)", null) { navController.navigate(ApiCoverageRoute) },
-                        SettingsLink("Galerie componente", "Design system-ul, în light și dark", null) { navController.navigate(ComponentGalleryRoute) },
-                    ),
-                    accountSection = { AccountSection(userEmail, onSignOut) },
-                )
-            }
+                // --- bottom bar ---
+                composable<FavoritesRoute> {
+                    FavoritesScreen(
+                        onAddTeam = { navController.navigate(AddFavoriteRoute) },
+                        onOpenTeam = { teamId -> navController.navigate(TeamDetailsRoute(teamId)) },
+                    )
+                }
+                composable<ExploreRoute> {
+                    ExploreScreen(onLeagueClick = { leagueId -> navController.navigate(ExploreLeagueRoute(leagueId)) })
+                }
+                composable<TicketRoute> {
+                    PlaceholderScreen("Biletul meu", "S12", "Meciurile de pe bilet, programul de urmărire și starea fiecărui pariu, live.", isTab = true)
+                }
+                composable<SettingsRoute> {
+                    SettingsScreen(
+                        plannedScreens = listOf(
+                            SettingsLink("Detalii meci", "Scor, evenimente, statistici, echipe de start", "S10") { navController.navigate(MatchDetailsRoute(fixtureId = 0)) },
+                            SettingsLink("Detalii echipă", "Clasament, formă, golgheteri, meciuri viitoare", "S10") { navController.navigate(TeamDetailsRoute(teamId = 0)) },
+                            SettingsLink("Meciuri în zonă", "Listă și hartă cu stadioanele din rază (GPS)", "S10") { navController.navigate(NearbyMatchesRoute) },
+                            SettingsLink("Simulare", "Gol, roșu, penalty, echipe de start, pentru demo", "S10") { navController.navigate(SimulationRoute) },
+                            SettingsLink("Plan weekend", "Planul generat miercurea, editabil", "S12") { navController.navigate(WeekendPlanRoute) },
+                            SettingsLink("Analiză AI", "Analiza meciului și chat, din Detalii meci", "S12") { navController.navigate(AiAnalysisRoute(fixtureId = 0)) },
+                            SettingsLink("Jucător", "Profilul unui jucător", "S12") { navController.navigate(PlayerRoute(playerId = 0)) },
+                        ),
+                        debugTools = listOf(
+                            SettingsLink("Test acoperire API", "Plan, id-uri ligi, coverage (3 cereri)", null) { navController.navigate(ApiCoverageRoute) },
+                            SettingsLink("Galerie componente", "Design system-ul, în light și dark", null) { navController.navigate(ComponentGalleryRoute) },
+                        ),
+                        accountSection = { AccountSection(userEmail, onSignOut) },
+                    )
+                }
 
-            // --- deeper screens ---
-            composable<ExploreLeagueRoute> {
-                ExploreLeagueScreen(onBack = back, onFixtureClick = { id -> navController.navigate(MatchDetailsRoute(id)) })
-            }
-            composable<AddFavoriteRoute> {
-                AddFavoriteScreen(onBack = back)
-            }
-            composable<MatchDetailsRoute> { entry ->
-                val route = entry.toRoute<MatchDetailsRoute>()
-                PlaceholderScreen("Detalii meci", "S10", "Scor, cronologia evenimentelor, statistici, echipe de start și butonul „Analiză AI”.\n(meciul #${route.fixtureId})", back)
-            }
-            composable<TeamDetailsRoute> { entry ->
-                val route = entry.toRoute<TeamDetailsRoute>()
-                PlaceholderScreen("Detalii echipă", "S10", "Clasament, formă, goluri acasă / deplasare, golgheteri, meciuri viitoare.\n(echipa #${route.teamId})", back)
-            }
-            composable<PlayerRoute> {
-                PlaceholderScreen("Jucător", "S12", "Profilul și statisticile unui jucător.", back)
-            }
-            composable<NearbyMatchesRoute> {
-                PlaceholderScreen("Meciuri în zonă", "S10", "Listă și hartă cu stadioanele din raza aleasă, după GPS.", back)
-            }
-            composable<AiAnalysisRoute> {
-                PlaceholderScreen("Analiză AI", "S12", "Analiza meciului pe statistici reale și chat despre meci.", back)
-            }
-            composable<WeekendPlanRoute> {
-                PlaceholderScreen("Plan weekend", "S12", "Planul generat miercurea: ce meci vezi în fiecare slot, la stadion sau la TV.", back)
-            }
-            composable<SimulationRoute> {
-                PlaceholderScreen("Simulare", "S10", "Simulează gol, roșu, penalty sau echipe de start, ca să demonstrezi alertele.", back)
-            }
-            composable<ComponentGalleryRoute> {
-                ComponentGalleryScreen(onBack = back)
-            }
-            composable<ApiCoverageRoute> {
-                ApiCoverageScreen(onBack = back)
+                // --- deeper screens ---
+                composable<ExploreLeagueRoute> {
+                    ExploreLeagueScreen(onBack = back, onFixtureClick = { id -> navController.navigate(MatchDetailsRoute(id)) })
+                }
+                composable<AddFavoriteRoute> {
+                    AddFavoriteScreen(onBack = back)
+                }
+                composable<MatchDetailsRoute> { entry ->
+                    val route = entry.toRoute<MatchDetailsRoute>()
+                    PlaceholderScreen("Detalii meci", "S10", "Scor, cronologia evenimentelor, statistici, echipe de start și butonul „Analiză AI”.\n(meciul #${route.fixtureId})", back)
+                }
+                composable<TeamDetailsRoute> { entry ->
+                    val route = entry.toRoute<TeamDetailsRoute>()
+                    PlaceholderScreen("Detalii echipă", "S10", "Clasament, formă, goluri acasă / deplasare, golgheteri, meciuri viitoare.\n(echipa #${route.teamId})", back)
+                }
+                composable<PlayerRoute> {
+                    PlaceholderScreen("Jucător", "S12", "Profilul și statisticile unui jucător.", back)
+                }
+                composable<NearbyMatchesRoute> {
+                    PlaceholderScreen("Meciuri în zonă", "S10", "Listă și hartă cu stadioanele din raza aleasă, după GPS.", back)
+                }
+                composable<AiAnalysisRoute> {
+                    PlaceholderScreen("Analiză AI", "S12", "Analiza meciului pe statistici reale și chat despre meci.", back)
+                }
+                composable<WeekendPlanRoute> {
+                    PlaceholderScreen("Plan weekend", "S12", "Planul generat miercurea: ce meci vezi în fiecare slot, la stadion sau la TV.", back)
+                }
+                composable<SimulationRoute> {
+                    PlaceholderScreen("Simulare", "S10", "Simulează gol, roșu, penalty sau echipe de start, ca să demonstrezi alertele.", back)
+                }
+                composable<ComponentGalleryRoute> {
+                    ComponentGalleryScreen(onBack = back)
+                }
+                composable<ApiCoverageRoute> {
+                    ApiCoverageScreen(onBack = back)
+                }
             }
         }
     }

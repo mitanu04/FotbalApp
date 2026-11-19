@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -50,6 +51,7 @@ import ro.fluierulfinal.domain.model.AppTime
 import ro.fluierulfinal.domain.model.Fixture
 import ro.fluierulfinal.domain.model.FixtureStatus
 import ro.fluierulfinal.ui.components.LeagueLogo
+import ro.fluierulfinal.ui.components.tabListPadding
 import ro.fluierulfinal.ui.components.TeamLogo
 import ro.fluierulfinal.ui.components.longDayLabel
 import java.time.LocalDate
@@ -60,10 +62,10 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun ExploreScreen(onLeagueClick: (leagueId: Int) -> Unit, viewModel: ExploreViewModel = hiltViewModel()) {
     val colors = MaterialTheme.colorScheme
-    Scaffold(topBar = { TopAppBar(title = { Text("Explorează") }) }) { padding ->
+    Scaffold(topBar = { TopAppBar(title = { Text("Explorează") }) }, contentWindowInsets = WindowInsets(0)) { padding ->
         LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(start = 12.dp, end = 12.dp, bottom = 16.dp),
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = tabListPadding(padding, horizontal = 12.dp),
         ) {
             item {
                 Text("Alege liga", fontWeight = FontWeight.SemiBold, color = colors.primary, modifier = Modifier.padding(start = 4.dp, bottom = 8.dp))

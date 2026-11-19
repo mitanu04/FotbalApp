@@ -66,6 +66,8 @@ import ro.fluierulfinal.domain.model.Favorite
 import ro.fluierulfinal.ui.components.AppIcons
 import ro.fluierulfinal.ui.components.EmptyState
 import ro.fluierulfinal.ui.components.ErrorState
+import ro.fluierulfinal.ui.components.LocalBottomBarPadding
+import ro.fluierulfinal.ui.components.tabListPadding
 import ro.fluierulfinal.ui.components.SectionLabel
 import ro.fluierulfinal.ui.components.TeamLogo
 import ro.fluierulfinal.ui.components.shimmer
@@ -100,15 +102,18 @@ fun FavoritesScreen(
         }
     }
 
+    val bottomBar = LocalBottomBarPadding.current
     Scaffold(
         containerColor = colors.background,
+        // edge-to-edge: the bottom bar height is added to the list's contentPadding instead
+        contentWindowInsets = WindowInsets(0),
         topBar = {
             TopAppBar(
                 title = { Text("Favorite") },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = colors.background),
             )
         },
-        snackbarHost = { SnackbarHost(snackbar) },
+        snackbarHost = { SnackbarHost(snackbar, Modifier.padding(bottom = bottomBar)) },
         floatingActionButton = {
             if (state.favorites.isNotEmpty()) {
                 ExtendedFloatingActionButton(
@@ -118,22 +123,28 @@ fun FavoritesScreen(
                     // main action: gold in both themes (tertiary), so the brand stays recognizable
                     containerColor = colors.tertiary,
                     contentColor = colors.onTertiary,
+                    modifier = Modifier.padding(bottom = bottomBar),
                 )
             }
         },
     ) { padding ->
-        Box(Modifier.fillMaxSize().padding(padding)) {
+        // full-screen states keep clear of the top bar and the bottom bar
+        val statePadding = Modifier.padding(top = padding.calculateTopPadding(), bottom = bottomBar)
+        Box(Modifier.fillMaxSize()) {
             when {
-                state.loading && state.favorites.isEmpty() -> FavoritesSkeleton()
-                state.error != null && state.favorites.isEmpty() -> ErrorState(state.error!!, onRetry = viewModel::refresh)
+                state.loading && state.favorites.isEmpty() -> Box(statePadding) { FavoritesSkeleton() }
+                state.error != null && state.favorites.isEmpty() -> ErrorState(state.error!!, onRetry = viewModel::refresh, modifier = statePadding)
                 state.favorites.isEmpty() -> EmptyState(
+                    modifier = statePadding,
                     icon = AppIcons.star,
                     title = "Nicio echipă favorită",
                     text = "Adaugă echipele pe care le urmărești, ca să le vezi meciurile și să primești alerte.",
                     action = "Adaugă echipă", onAction = onAddTeam,
                 )
                 else -> LazyColumn(
-                    contentPadding = PaddingValues(start = Spacing.md, end = Spacing.md, bottom = 96.dp),
+                    modifier = Modifier.fillMaxSize(),
+                    // last row stays clear of the FAB: FAB margin + FAB height + 16dp
+                    contentPadding = tabListPadding(padding, horizontal = Spacing.md, extraBottom = Spacing.lg + FAB_HEIGHT + Spacing.lg),
                     verticalArrangement = Arrangement.spacedBy(Spacing.sm),
                 ) {
                     item { SectionLabel("${state.favorites.size} ${if (state.favorites.size == 1) "echipă" else "echipe"}", Modifier.padding(top = 0.dp)) }
@@ -174,6 +185,9 @@ fun FavoritesScreen(
         )
     }
 }
+
+/** Height of the extended FAB ("Adaugă echipă"), Material 3 spec. */
+private val FAB_HEIGHT = 56.dp
 
 /**
  * Swipe from right to left reveals a red background; the trash icon fades and grows in as the row moves.
