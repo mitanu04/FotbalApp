@@ -11,6 +11,7 @@ import ro.fluierulfinal.data.remote.ApiJson
 import ro.fluierulfinal.data.remote.dto.ApiResponseDto
 import ro.fluierulfinal.data.remote.dto.FixtureItemDto
 import ro.fluierulfinal.data.remote.dto.LeagueItemDto
+import ro.fluierulfinal.data.remote.dto.StandingsItemDto
 import ro.fluierulfinal.data.remote.dto.StatusDto
 import ro.fluierulfinal.data.remote.dto.TeamItemDto
 import ro.fluierulfinal.domain.model.League
@@ -45,6 +46,7 @@ class FixtureRepositoryImplTest {
         override suspend fun leagues(id: Int?, country: String?, season: Int?): ApiResponseDto<List<LeagueItemDto>> = error("not used")
         override suspend fun searchTeams(query: String): ApiResponseDto<List<TeamItemDto>> = error("not used")
         override suspend fun team(id: Int): ApiResponseDto<List<TeamItemDto>> = error("not used")
+        override suspend fun standings(league: Int, season: Int): ApiResponseDto<List<StandingsItemDto>> = error("not used")
     }
 
     private class InMemoryCache : CacheDataSource {
@@ -57,6 +59,8 @@ class FixtureRepositoryImplTest {
         override suspend fun putTeams(teams: List<Team>, now: Instant) = Unit
         override suspend fun getLeague(leagueId: Int, season: Int): Cached<League>? = null
         override suspend fun putLeagues(leagues: List<League>, now: Instant) = Unit
+        override suspend fun getStandings(leagueId: Int, season: Int): Cached<List<StandingsItemDto>>? = null
+        override suspend fun putStandings(leagueId: Int, season: Int, items: List<StandingsItemDto>, now: Instant) = Unit
     }
 
     private fun repo(api: ApiFootballService, cache: CacheDataSource, at: Instant = now) =

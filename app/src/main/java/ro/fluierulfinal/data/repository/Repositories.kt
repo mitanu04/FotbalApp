@@ -5,6 +5,7 @@ import ro.fluierulfinal.domain.model.AlertSettings
 import ro.fluierulfinal.domain.model.Favorite
 import ro.fluierulfinal.domain.model.Fixture
 import ro.fluierulfinal.domain.model.League
+import ro.fluierulfinal.domain.model.Standings
 import ro.fluierulfinal.domain.model.Team
 import java.time.LocalDate
 
@@ -78,6 +79,11 @@ interface FixtureRepository {
      * @throws DayNotAvailableException for days outside the free plan with nothing cached
      */
     suspend fun fixtures(leagueId: Int, day: LocalDate): FixturesResult
+}
+
+interface StandingsRepository {
+    /** League table for [season]: memory → Supabase cache → one /standings call. */
+    suspend fun standings(leagueId: Int, season: Int): Standings
 }
 
 interface FavoritesRepository {

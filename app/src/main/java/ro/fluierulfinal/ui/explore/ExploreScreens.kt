@@ -29,7 +29,9 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Tab
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -37,6 +39,9 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.launch
@@ -110,6 +115,7 @@ fun ExploreLeagueScreen(
     val colors = MaterialTheme.colorScheme
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+    var tab by rememberSaveable { mutableIntStateOf(0) }
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbar) },
@@ -129,27 +135,37 @@ fun ExploreLeagueScreen(
         },
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
-            DateChipsRow(
-                days = state.days, selected = state.selectedDay, today = state.today,
-                onSelect = viewModel::selectDay,
-                isEnabled = viewModel::isDayAvailable,
-                onDisabledClick = {
-                    scope.launch { snackbar.currentSnackbarData?.dismiss(); snackbar.showSnackbar("Disponibil cu planul complet API-Football") }
-                },
-            )
-            Text(
-                longDayLabel(state.selectedDay),
-                fontWeight = FontWeight.SemiBold, fontSize = 14.sp, color = colors.onSurfaceVariant,
-                modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp),
-            )
-            Box(Modifier.fillMaxSize()) {
-                when (val f = state.fixtures) {
-                    FixturesState.Loading -> CircularProgressIndicator(Modifier.align(Alignment.Center))
-                    is FixturesState.NotAvailable -> Message("Zi indisponibilă", f.message, null) {}
-                    is FixturesState.Error -> Message("Ceva n-a mers", f.message, "Reîncearcă", viewModel::retry)
-                    is FixturesState.Loaded ->
-                        if (f.groups.isEmpty) Message("Niciun meci", "${state.league.name} nu are meciuri în această zi.", null) {}
-                        else FixtureList(f.groups, f.source, onFixtureClick)
+            // two tabs: the day's fixtures, and the league table (loaded only when opened)
+            PrimaryTabRow(selectedTabIndex = tab, containerColor = colors.background) {
+                Tab(selected = tab == 0, onClick = { tab = 0 }, text = { Text("Meciuri") })
+                Tab(selected = tab == 1, onClick = { tab = 1; viewModel.loadStandings() }, text = { Text("Clasament") })
+            }
+            if (tab == 1) {
+                LaunchedEffect(Unit) { viewModel.loadStandings() }   // e.g. after rotation, tab restored as "Clasament"
+                StandingsTab(state.standings, onRetry = { viewModel.loadStandings(force = true) })
+            } else {
+                DateChipsRow(
+                    days = state.days, selected = state.selectedDay, today = state.today,
+                    onSelect = viewModel::selectDay,
+                    isEnabled = viewModel::isDayAvailable,
+                    onDisabledClick = {
+                        scope.launch { snackbar.currentSnackbarData?.dismiss(); snackbar.showSnackbar("Disponibil cu planul complet API-Football") }
+                    },
+                )
+                Text(
+                    longDayLabel(state.selectedDay),
+                    fontWeight = FontWeight.SemiBold, fontSize = 14.sp, color = colors.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp),
+                )
+                Box(Modifier.fillMaxSize()) {
+                    when (val f = state.fixtures) {
+                        FixturesState.Loading -> CircularProgressIndicator(Modifier.align(Alignment.Center))
+                        is FixturesState.NotAvailable -> Message("Zi indisponibilă", f.message, null) {}
+                        is FixturesState.Error -> Message("Ceva n-a mers", f.message, "Reîncearcă", viewModel::retry)
+                        is FixturesState.Loaded ->
+                            if (f.groups.isEmpty) Message("Niciun meci", "${state.league.name} nu are meciuri în această zi.", null) {}
+                            else FixtureList(f.groups, f.source, onFixtureClick)
+                    }
                 }
             }
         }

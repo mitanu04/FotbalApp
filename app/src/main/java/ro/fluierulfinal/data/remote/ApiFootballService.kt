@@ -5,6 +5,7 @@ import retrofit2.http.Query
 import ro.fluierulfinal.data.remote.dto.ApiResponseDto
 import ro.fluierulfinal.data.remote.dto.FixtureItemDto
 import ro.fluierulfinal.data.remote.dto.LeagueItemDto
+import ro.fluierulfinal.data.remote.dto.StandingsItemDto
 import ro.fluierulfinal.data.remote.dto.StatusDto
 import ro.fluierulfinal.data.remote.dto.TeamItemDto
 
@@ -32,6 +33,13 @@ interface ApiFootballService {
 
     @GET("teams")
     suspend fun team(@Query("id") id: Int): ApiResponseDto<List<TeamItemDto>>
+
+    /** League table. On the free plan only seasons 2022–2024 are allowed (see SupportedLeagues.STANDINGS_SEASON). */
+    @GET("standings")
+    suspend fun standings(
+        @Query("league") league: Int,
+        @Query("season") season: Int,
+    ): ApiResponseDto<List<StandingsItemDto>>
 
     @GET("fixtures")
     suspend fun fixtures(

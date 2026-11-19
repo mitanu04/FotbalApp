@@ -14,15 +14,20 @@ import ro.fluierulfinal.data.repository.FavoritesRepository
 import ro.fluierulfinal.data.repository.FixtureRepository
 import ro.fluierulfinal.data.repository.FixturesResult
 import ro.fluierulfinal.data.repository.LeagueRepository
+import ro.fluierulfinal.data.repository.StandingsRepository
 import ro.fluierulfinal.data.repository.TeamRepository
 import ro.fluierulfinal.domain.model.AlertSettings
 import ro.fluierulfinal.domain.model.AppTime
 import ro.fluierulfinal.domain.model.Favorite
 import ro.fluierulfinal.domain.model.Fixture
 import ro.fluierulfinal.domain.model.FixtureStatus
+import ro.fluierulfinal.domain.model.FormLetter
 import ro.fluierulfinal.domain.model.League
 import ro.fluierulfinal.domain.model.LeagueCoverage
 import ro.fluierulfinal.domain.model.Score
+import ro.fluierulfinal.domain.model.StandingGroup
+import ro.fluierulfinal.domain.model.StandingRow
+import ro.fluierulfinal.domain.model.Standings
 import ro.fluierulfinal.domain.model.SupportedLeagues
 import ro.fluierulfinal.domain.model.Team
 import java.time.Clock
@@ -160,4 +165,23 @@ class FakeFavoritesRepository @Inject constructor(private val clock: Clock) : Fa
 
     override suspend fun restore(favorite: Favorite) =
         _favorites.update { list -> (list + favorite).sortedByDescending { it.addedAt } }
+}
+
+/** Fake league table built from the fake teams: same data every time, no network. */
+@Singleton
+class FakeStandingsRepository @Inject constructor() : StandingsRepository {
+    override suspend fun standings(leagueId: Int, season: Int): Standings {
+        delay(FAKE_DELAY_MS)
+        val teams = FakeData.teamsByLeague[leagueId].orEmpty()
+        val rnd = Random(leagueId * 31 + season)
+        val rows = teams.map { team ->
+            val w = rnd.nextInt(4, 12); val d = rnd.nextInt(2, 7); val l = rnd.nextInt(1, 8)
+            val gf = w * 2 + d; val ga = l * 2 + d / 2
+            StandingRow(0, team, w + d + l, w, d, l, gf, ga, gf - ga, w * 3 + d,
+                List(5) { FormLetter.entries[rnd.nextInt(3)] }, null)
+        }.sortedByDescending { it.points }.mapIndexed { i, r ->
+            r.copy(rank = i + 1, description = when (i) { 0 -> "Champions League"; teams.lastIndex -> "Relegation"; else -> null })
+        }
+        return Standings(leagueId, season, listOf(StandingGroup("Regular Season", rows)))
+    }
 }

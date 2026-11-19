@@ -2,13 +2,19 @@ package ro.fluierulfinal.data.remote.mapper
 
 import ro.fluierulfinal.data.remote.dto.FixtureItemDto
 import ro.fluierulfinal.data.remote.dto.LeagueItemDto
+import ro.fluierulfinal.data.remote.dto.StandingRowDto
+import ro.fluierulfinal.data.remote.dto.StandingsItemDto
 import ro.fluierulfinal.data.remote.dto.TeamItemDto
 import ro.fluierulfinal.data.remote.dto.TeamRefDto
 import ro.fluierulfinal.domain.model.Fixture
 import ro.fluierulfinal.domain.model.FixtureStatus
+import ro.fluierulfinal.domain.model.FormLetter
 import ro.fluierulfinal.domain.model.League
 import ro.fluierulfinal.domain.model.LeagueCoverage
 import ro.fluierulfinal.domain.model.Score
+import ro.fluierulfinal.domain.model.StandingGroup
+import ro.fluierulfinal.domain.model.StandingRow
+import ro.fluierulfinal.domain.model.Standings
 import ro.fluierulfinal.domain.model.Team
 import java.time.Instant
 
@@ -75,3 +81,40 @@ fun fixtureStatusOf(short: String): FixtureStatus = when (short) {
     "CANC", "ABD" -> FixtureStatus.CANCELLED
     else -> FixtureStatus.SCHEDULED       // "TBD", "NS"
 }
+
+/**
+ * /standings item → domain. Group names lose the league prefix ("Liga I: Championship Round" →
+ * "Championship Round"); the form string is reversed, because the API lists the most recent result last.
+ */
+fun StandingsItemDto.toDomain(): Standings = Standings(
+    leagueId = league.id,
+    season = league.season,
+    groups = league.standings.filter { it.isNotEmpty() }.map { rows ->
+        StandingGroup(
+            name = rows.first().group?.substringAfter(": ")?.trim().orEmpty(),
+            rows = rows.sortedBy { it.rank }.map { it.toDomain() },
+        )
+    },
+)
+
+fun StandingRowDto.toDomain(): StandingRow = StandingRow(
+    rank = rank,
+    team = team.toDomain(),
+    played = all.played,
+    win = all.win,
+    draw = all.draw,
+    lose = all.lose,
+    goalsFor = all.goals.`for` ?: 0,
+    goalsAgainst = all.goals.against ?: 0,
+    goalDiff = goalsDiff,
+    points = points,
+    form = form.orEmpty().reversed().mapNotNull {
+        when (it) {
+            'W' -> FormLetter.WIN
+            'D' -> FormLetter.DRAW
+            'L' -> FormLetter.LOSS
+            else -> null
+        }
+    },
+    description = description?.takeIf { it.isNotBlank() },
+)

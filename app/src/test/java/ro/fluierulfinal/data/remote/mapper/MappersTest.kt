@@ -9,8 +9,10 @@ import ro.fluierulfinal.data.remote.ApiJson
 import ro.fluierulfinal.data.remote.dto.ApiResponseDto
 import ro.fluierulfinal.data.remote.dto.FixtureItemDto
 import ro.fluierulfinal.data.remote.dto.LeagueItemDto
+import ro.fluierulfinal.data.remote.dto.StandingsItemDto
 import ro.fluierulfinal.data.remote.dto.TeamItemDto
 import ro.fluierulfinal.domain.model.FixtureStatus
+import ro.fluierulfinal.domain.model.FormLetter
 import ro.fluierulfinal.domain.model.Score
 import java.time.Instant
 
@@ -107,6 +109,28 @@ class MappersTest {
         assertTrue(old.coverage.odds)
 
         assertNull(item.toDomain(season = 1990))
+    }
+
+    @Test
+    fun standings_liga1_2024_hasThreeGroups() {
+        val s = ApiJson.decodeFromString<ApiResponseDto<List<StandingsItemDto>>>(resource("standings_283_2024.json"))
+            .response.single().toDomain()
+        assertEquals(283, s.leagueId)
+        assertEquals(2024, s.season)
+        assertEquals(listOf("Championship Round", "Relegation Round", "Regular Season"), s.groups.map { it.name })
+        assertEquals(listOf(6, 10, 16), s.groups.map { it.rows.size })
+
+        val leader = s.groups.first().rows.first()
+        assertEquals(1, leader.rank)
+        assertEquals("FCSB", leader.team.name)
+        assertEquals(52, leader.points)
+        assertEquals(10, leader.played)
+        assertEquals(18, leader.goalsFor)
+        assertEquals(9, leader.goalsAgainst)
+        assertEquals("UEFA Champions League Qualifiers", leader.description)
+        // API form "DWWWW" lists the most recent result last; we keep the most recent first
+        assertEquals(FormLetter.WIN, leader.form.first())
+        assertEquals(FormLetter.DRAW, leader.form.last())
     }
 
     @Test

@@ -16,6 +16,7 @@ import ro.fluierulfinal.data.cache.CacheDataSource
 import ro.fluierulfinal.data.remote.ApiFootballService
 import ro.fluierulfinal.data.remote.mapper.toDomain
 import ro.fluierulfinal.data.remote.orThrow
+import ro.fluierulfinal.data.repository.safeDescription
 import ro.fluierulfinal.domain.model.League
 import java.time.Clock
 import java.time.LocalDate
@@ -102,7 +103,7 @@ class ApiCoverageViewModel @Inject constructor(
         appendLine(
             saved.fold(
                 onSuccess = { "Salvat în Supabase (tabelul leagues): ${(romanianLeagues + laLiga).joinToString { "${it.id}_${it.season}" }}" },
-                onFailure = { "NU s-a salvat în Supabase: ${it.message}" },
+                onFailure = { "NU s-a salvat în Supabase: ${it.safeDescription()}" },
             )
         )
         appendLine()

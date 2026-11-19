@@ -31,7 +31,7 @@ class TeamRepositoryImpl @Inject constructor(
         val teams = api.searchTeams(q).orThrow().map { it.toDomain() }
         searchCache[q] = teams
         // also fill the shared teams cache, so getTeam() for these teams costs nothing later
-        runCatching { cache.putTeams(teams, clock.instant()) }.onFailure { Log.w(TAG, "team cache write failed", it) }
+        runCatching { cache.putTeams(teams, clock.instant()) }.onFailure { Log.w(TAG, "team cache write failed: ${it.safeDescription()}") }
         return teams
     }
 
@@ -41,7 +41,7 @@ class TeamRepositoryImpl @Inject constructor(
 
         val team = api.team(teamId).orThrow().firstOrNull()?.toDomain()
             ?: return cached?.value ?: error("Team $teamId not found")
-        runCatching { cache.putTeams(listOf(team), clock.instant()) }.onFailure { Log.w(TAG, "team cache write failed", it) }
+        runCatching { cache.putTeams(listOf(team), clock.instant()) }.onFailure { Log.w(TAG, "team cache write failed: ${it.safeDescription()}") }
         return team
     }
 

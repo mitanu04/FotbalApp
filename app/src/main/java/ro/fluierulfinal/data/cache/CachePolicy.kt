@@ -21,6 +21,13 @@ object CachePolicy {
         !now.isAfter(updatedAt.plus(STATIC_DATA_TTL))
 
     /**
+     * A league table: a finished past season never changes, so it never expires;
+     * the current season's table follows the 6-hour fixtures rule.
+     */
+    fun isStandingsFresh(updatedAt: Instant, now: Instant, season: Int, currentSeason: Int): Boolean =
+        season < currentSeason || !now.isAfter(updatedAt.plus(FIXTURES_TTL))
+
+    /**
      * A day's fixtures are kept forever once every fixture is over (finished or cancelled):
      * nothing can change any more. Otherwise they expire after [FIXTURES_TTL].
      * An empty day ("no matches") follows the normal 6-hour rule, since fixtures can still be scheduled.

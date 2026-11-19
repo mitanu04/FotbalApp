@@ -42,7 +42,7 @@ class FixtureRepositoryImpl @Inject constructor(
         val key = "${leagueId}_$day"
 
         val cached = memory[key] ?: runCatching { cache.getFixturesDay(leagueId, day) }
-            .onFailure { Log.w(TAG, "cache read failed for $key, falling back to the API", it) }
+            .onFailure { Log.w(TAG, "cache read failed for $key, falling back to the API: ${it.safeDescription()}") }
             .getOrNull()
             ?.also { memory[key] = it }
 
@@ -64,7 +64,7 @@ class FixtureRepositoryImpl @Inject constructor(
         val byLeague = (SupportedLeagues.ids + leagueId).associateWith { id -> items.filter { it.league.id == id } }
         byLeague.forEach { (id, list) -> memory["${id}_$day"] = Cached(list, now) }
         runCatching { cache.putFixturesDays(byLeague, day, now) }
-            .onFailure { Log.w(TAG, "cache write failed for $day", it) }
+            .onFailure { Log.w(TAG, "cache write failed for $day: ${it.safeDescription()}") }
 
         FixturesResult(byLeague.getValue(leagueId).toSortedDomain(), DataSource.NETWORK)
     }

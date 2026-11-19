@@ -45,6 +45,13 @@ class CachePolicyTest {
     }
 
     @Test
+    fun standings_pastSeasonNeverExpires_currentSeasonAfter6Hours() {
+        assertTrue(CachePolicy.isStandingsFresh(written, written.plus(Duration.ofDays(400)), season = 2024, currentSeason = 2026))
+        assertTrue(CachePolicy.isStandingsFresh(written, written.plus(Duration.ofHours(5)), season = 2026, currentSeason = 2026))
+        assertFalse(CachePolicy.isStandingsFresh(written, written.plus(Duration.ofHours(7)), season = 2026, currentSeason = 2026))
+    }
+
+    @Test
     fun emptyDay_followsTheNormal6HourRule() {
         assertTrue(CachePolicy.isFixturesDayFresh(written, written.plus(Duration.ofHours(5)), emptyList()))
         assertFalse(CachePolicy.isFixturesDayFresh(written, written.plus(Duration.ofHours(7)), emptyList()))

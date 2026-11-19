@@ -17,10 +17,13 @@ import ro.fluierulfinal.data.repository.DataSource
 import ro.fluierulfinal.data.repository.DayNotAvailableException
 import ro.fluierulfinal.data.repository.FixtureRepository
 import ro.fluierulfinal.data.repository.LeagueRepository
+import ro.fluierulfinal.data.repository.StandingsRepository
 import ro.fluierulfinal.domain.model.AppTime
 import ro.fluierulfinal.domain.model.Fixture
 import ro.fluierulfinal.domain.model.FixtureStatus
 import ro.fluierulfinal.domain.model.League
+import ro.fluierulfinal.domain.model.Standings
+import ro.fluierulfinal.domain.model.SupportedLeagues
 import ro.fluierulfinal.navigation.ExploreLeagueRoute
 import java.time.Clock
 import java.time.LocalDate
@@ -49,6 +52,14 @@ data class FixtureGroups(
     }
 }
 
+/** The league table tab: loaded only when the user opens it (no prefetch). */
+sealed interface StandingsState {
+    data object NotLoaded : StandingsState
+    data object Loading : StandingsState
+    data class Loaded(val standings: Standings) : StandingsState
+    data class Error(val message: String) : StandingsState
+}
+
 sealed interface FixturesState {
     data object Loading : FixturesState
     data class Loaded(val groups: FixtureGroups, val source: DataSource) : FixturesState
@@ -62,6 +73,7 @@ data class ExploreLeagueUiState(
     val days: List<LocalDate>,
     val selectedDay: LocalDate,
     val fixtures: FixturesState = FixturesState.Loading,
+    val standings: StandingsState = StandingsState.NotLoaded,
 )
 
 /**
@@ -73,6 +85,7 @@ class ExploreLeagueViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     leagues: LeagueRepository,
     private val fixtures: FixtureRepository,
+    private val standingsRepository: StandingsRepository,
     clock: Clock,
 ) : ViewModel() {
 
@@ -108,6 +121,25 @@ class ExploreLeagueViewModel @Inject constructor(
     }
 
     fun retry() = load()
+
+    /** Called when the "Clasament" tab is opened; does nothing if the table is already there or loading. */
+    fun loadStandings(force: Boolean = false) {
+        val current = _state.value.standings
+        if (!force && (current is StandingsState.Loaded || current is StandingsState.Loading)) return
+        _state.update { it.copy(standings = StandingsState.Loading) }
+        viewModelScope.launch {
+            val result = try {
+                StandingsState.Loaded(standingsRepository.standings(leagueId, SupportedLeagues.STANDINGS_SEASON))
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: ApiFootballException) {
+                StandingsState.Error("API-Football: ${e.message}")
+            } catch (e: Exception) {
+                StandingsState.Error("Nu am putut încărca clasamentul. Verifică internetul.")
+            }
+            _state.update { it.copy(standings = result) }
+        }
+    }
 
     private fun load() {
         loadJob?.cancel()   // switching days quickly: only the last chosen day matters

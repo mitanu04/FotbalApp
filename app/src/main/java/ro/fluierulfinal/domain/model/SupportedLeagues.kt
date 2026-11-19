@@ -8,6 +8,13 @@ object SupportedLeagues {
 
     const val CURRENT_SEASON = 2026
 
+    /**
+     * Season shown in the league tables. The free API-Football plan refuses /standings for 2026
+     * ("try from 2022 to 2024"), so the app shows the last complete season it may access: 2024/25.
+     * With a paid plan, set this to CURRENT_SEASON.
+     */
+    const val STANDINGS_SEASON = 2024
+
     val all: List<League> = listOf(
         league(283, "Liga I", "România"),
         league(284, "Liga II", "România"),

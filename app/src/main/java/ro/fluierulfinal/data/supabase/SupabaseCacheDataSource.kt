@@ -5,6 +5,7 @@ import io.github.jan.supabase.postgrest.from
 import ro.fluierulfinal.data.cache.CacheDataSource
 import ro.fluierulfinal.data.cache.Cached
 import ro.fluierulfinal.data.remote.dto.FixtureItemDto
+import ro.fluierulfinal.data.remote.dto.StandingsItemDto
 import ro.fluierulfinal.domain.model.League
 import ro.fluierulfinal.domain.model.Team
 import java.time.Instant
@@ -39,6 +40,15 @@ class SupabaseCacheDataSource @Inject constructor(
     override suspend fun putLeagues(leagues: List<League>, now: Instant) {
         if (leagues.isEmpty()) return
         supabase.from("leagues").upsert(leagues.map { it.toRow(now) })
+    }
+
+    override suspend fun getStandings(leagueId: Int, season: Int): Cached<List<StandingsItemDto>>? =
+        supabase.from("standings").select { filter { eq("id", leagueRowId(leagueId, season)) } }
+            .decodeSingleOrNull<StandingsRow>()
+            ?.let { Cached(it.standings, parseTimestamp(it.updatedAt)) }
+
+    override suspend fun putStandings(leagueId: Int, season: Int, items: List<StandingsItemDto>, now: Instant) {
+        supabase.from("standings").upsert(StandingsRow(leagueRowId(leagueId, season), leagueId, season, items, now.toString()))
     }
 
     override suspend fun getFixturesDay(leagueId: Int, day: LocalDate): Cached<List<FixtureItemDto>>? =

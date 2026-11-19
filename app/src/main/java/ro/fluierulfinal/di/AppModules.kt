@@ -19,6 +19,7 @@ import ro.fluierulfinal.data.fake.FakeAuthRepository
 import ro.fluierulfinal.data.fake.FakeFavoritesRepository
 import ro.fluierulfinal.data.fake.FakeFixtureRepository
 import ro.fluierulfinal.data.fake.FakeLeagueRepository
+import ro.fluierulfinal.data.fake.FakeStandingsRepository
 import ro.fluierulfinal.data.fake.FakeTeamRepository
 import ro.fluierulfinal.data.repository.AuthRepository
 import ro.fluierulfinal.data.repository.AuthRepositoryImpl
@@ -28,6 +29,8 @@ import ro.fluierulfinal.data.repository.FixtureRepository
 import ro.fluierulfinal.data.repository.FixtureRepositoryImpl
 import ro.fluierulfinal.data.repository.LeagueRepository
 import ro.fluierulfinal.data.repository.LeagueRepositoryImpl
+import ro.fluierulfinal.data.repository.StandingsRepository
+import ro.fluierulfinal.data.repository.StandingsRepositoryImpl
 import ro.fluierulfinal.data.repository.TeamRepository
 import ro.fluierulfinal.data.repository.TeamRepositoryImpl
 import ro.fluierulfinal.data.supabase.SupabaseCacheDataSource
@@ -110,6 +113,10 @@ object RepositoryModule {
 
     @Provides @Singleton
     fun fixtures(real: Provider<FixtureRepositoryImpl>, fakeImpl: Provider<FakeFixtureRepository>): FixtureRepository =
+        if (fake) fakeImpl.get() else real.get()
+
+    @Provides @Singleton
+    fun standings(real: Provider<StandingsRepositoryImpl>, fakeImpl: Provider<FakeStandingsRepository>): StandingsRepository =
         if (fake) fakeImpl.get() else real.get()
 
     @Provides @Singleton

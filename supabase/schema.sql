@@ -78,11 +78,23 @@ create table if not exists public.fixtures_by_day (
     updated_at timestamptz not null default now()
 );
 
--- Same rules for the three cache tables.
+-- ---------------------------------------------------------------------------
+-- standings: a league table for one season   (added for the league page "Clasament" tab)
+-- A past season never expires; the current season follows the 6-hour rule.
+-- ---------------------------------------------------------------------------
+create table if not exists public.standings (
+    id         text        primary key,          -- "{leagueId}_{season}", e.g. "283_2024"
+    league_id  integer     not null,
+    season     integer     not null,
+    standings  jsonb       not null,             -- raw /standings items
+    updated_at timestamptz not null default now()
+);
+
+-- Same rules for all the cache tables.
 do $$
 declare t text;
 begin
-    foreach t in array array['teams', 'leagues', 'fixtures_by_day'] loop
+    foreach t in array array['teams', 'leagues', 'fixtures_by_day', 'standings'] loop
         execute format('alter table public.%I enable row level security', t);
         execute format('drop policy if exists "cache: logged-in users can read" on public.%I', t);
         execute format('drop policy if exists "cache: logged-in users can insert" on public.%I', t);
@@ -95,4 +107,4 @@ end $$;
 
 -- The app talks to these tables through the Data API as the "authenticated" role.
 grant select, insert, update, delete on public.favorites to authenticated;
-grant select, insert, update on public.teams, public.leagues, public.fixtures_by_day to authenticated;
+grant select, insert, update on public.teams, public.leagues, public.fixtures_by_day, public.standings to authenticated;

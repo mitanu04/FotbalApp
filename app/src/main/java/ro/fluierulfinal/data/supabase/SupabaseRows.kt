@@ -3,6 +3,7 @@ package ro.fluierulfinal.data.supabase
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import ro.fluierulfinal.data.remote.dto.FixtureItemDto
+import ro.fluierulfinal.data.remote.dto.StandingsItemDto
 import ro.fluierulfinal.domain.model.AlertSettings
 import ro.fluierulfinal.domain.model.Favorite
 import ro.fluierulfinal.domain.model.League
@@ -99,3 +100,12 @@ data class FixturesDayRow(
 )
 
 fun fixturesDayRowId(leagueId: Int, day: String) = "${leagueId}_$day"
+
+@Serializable
+data class StandingsRow(
+    val id: String,                          // "{leagueId}_{season}"
+    @SerialName("league_id") val leagueId: Int,
+    val season: Int,
+    val standings: List<StandingsItemDto>,   // raw /standings items, mapped like a network response
+    @SerialName("updated_at") val updatedAt: String,
+)
