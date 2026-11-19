@@ -9,7 +9,8 @@ plugins {
 }
 
 // Secrets live in local.properties (never committed) and reach the code through BuildConfig:
-// API_FOOTBALL_KEY, SUPABASE_URL, SUPABASE_ANON_KEY.
+// API_FOOTBALL_KEY, SUPABASE_URL, SUPABASE_ANON_KEY. USE_FAKE_DATA=true switches every repository
+// to mock data (no API requests, no Supabase), handy while building UI.
 val localProps = Properties().apply {
     val f = rootProject.file("local.properties")
     if (f.exists()) f.inputStream().use { load(it) }
@@ -33,6 +34,7 @@ android {
         buildConfigField("String", "API_FOOTBALL_KEY", "\"${localProp("API_FOOTBALL_KEY")}\"")
         buildConfigField("String", "SUPABASE_URL", "\"${localProp("SUPABASE_URL")}\"")
         buildConfigField("String", "SUPABASE_ANON_KEY", "\"${localProp("SUPABASE_ANON_KEY")}\"")
+        buildConfigField("boolean", "USE_FAKE_DATA", localProp("USE_FAKE_DATA").ifBlank { "false" })
     }
 
     buildTypes {
@@ -46,6 +48,10 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+    }
+    testOptions {
+        // android.util.Log calls in repositories return defaults instead of throwing in JVM unit tests
+        unitTests.isReturnDefaultValues = true
     }
     buildFeatures {
         compose = true
