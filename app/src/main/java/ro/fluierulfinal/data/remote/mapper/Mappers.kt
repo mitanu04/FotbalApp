@@ -2,9 +2,11 @@ package ro.fluierulfinal.data.remote.mapper
 
 import ro.fluierulfinal.data.remote.dto.FixtureItemDto
 import ro.fluierulfinal.data.remote.dto.LeagueItemDto
+import ro.fluierulfinal.data.remote.dto.StandingRecordDto
 import ro.fluierulfinal.data.remote.dto.StandingRowDto
 import ro.fluierulfinal.data.remote.dto.StandingsItemDto
 import ro.fluierulfinal.data.remote.dto.TeamItemDto
+import ro.fluierulfinal.data.remote.dto.TopScorerItemDto
 import ro.fluierulfinal.data.remote.dto.TeamRefDto
 import ro.fluierulfinal.domain.model.Fixture
 import ro.fluierulfinal.domain.model.FixtureStatus
@@ -13,9 +15,11 @@ import ro.fluierulfinal.domain.model.League
 import ro.fluierulfinal.domain.model.LeagueCoverage
 import ro.fluierulfinal.domain.model.Score
 import ro.fluierulfinal.domain.model.StandingGroup
+import ro.fluierulfinal.domain.model.StandingRecord
 import ro.fluierulfinal.domain.model.StandingRow
 import ro.fluierulfinal.domain.model.Standings
 import ro.fluierulfinal.domain.model.Team
+import ro.fluierulfinal.domain.model.TopScorer
 import java.time.Instant
 
 // DTO → domain mappers. The rest of the app only sees domain models, so if API-Football
@@ -117,4 +121,21 @@ fun StandingRowDto.toDomain(): StandingRow = StandingRow(
         }
     },
     description = description?.takeIf { it.isNotBlank() },
+    home = home.toDomain(),
+    away = away.toDomain(),
 )
+
+fun StandingRecordDto.toDomain() = StandingRecord(played, win, draw, lose, goals.`for` ?: 0, goals.against ?: 0)
+
+/** /players/topscorers → domain, in the API's order (most goals first); ties share the same rank. */
+fun List<TopScorerItemDto>.toTopScorers(): List<TopScorer> {
+    val rows = mapNotNull { item ->
+        val st = item.statistics.firstOrNull() ?: return@mapNotNull null
+        TopScorer(
+            rank = 0, playerId = item.player.id, name = item.player.name, photoUrl = item.player.photo,
+            team = st.team.toDomain(), goals = st.goals.total ?: 0, assists = st.goals.assists ?: 0,
+            penalties = st.penalty.scored ?: 0, appearances = st.games.appearences ?: 0,
+        )
+    }
+    return rows.mapIndexed { i, r -> r.copy(rank = rows.indexOfFirst { it.goals == r.goals }.takeIf { it >= 0 }?.plus(1) ?: (i + 1)) }
+}

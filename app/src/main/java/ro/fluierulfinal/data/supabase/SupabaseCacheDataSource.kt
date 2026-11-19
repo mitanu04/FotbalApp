@@ -6,6 +6,7 @@ import ro.fluierulfinal.data.cache.CacheDataSource
 import ro.fluierulfinal.data.cache.Cached
 import ro.fluierulfinal.data.remote.dto.FixtureItemDto
 import ro.fluierulfinal.data.remote.dto.StandingsItemDto
+import ro.fluierulfinal.data.remote.dto.TopScorerItemDto
 import ro.fluierulfinal.domain.model.League
 import ro.fluierulfinal.domain.model.Team
 import java.time.Instant
@@ -49,6 +50,15 @@ class SupabaseCacheDataSource @Inject constructor(
 
     override suspend fun putStandings(leagueId: Int, season: Int, items: List<StandingsItemDto>, now: Instant) {
         supabase.from("standings").upsert(StandingsRow(leagueRowId(leagueId, season), leagueId, season, items, now.toString()))
+    }
+
+    override suspend fun getTopScorers(leagueId: Int, season: Int): Cached<List<TopScorerItemDto>>? =
+        supabase.from("top_scorers").select { filter { eq("id", leagueRowId(leagueId, season)) } }
+            .decodeSingleOrNull<TopScorersRow>()
+            ?.let { Cached(it.scorers, parseTimestamp(it.updatedAt)) }
+
+    override suspend fun putTopScorers(leagueId: Int, season: Int, items: List<TopScorerItemDto>, now: Instant) {
+        supabase.from("top_scorers").upsert(TopScorersRow(leagueRowId(leagueId, season), leagueId, season, items, now.toString()))
     }
 
     override suspend fun getFixturesDay(leagueId: Int, day: LocalDate): Cached<List<FixtureItemDto>>? =

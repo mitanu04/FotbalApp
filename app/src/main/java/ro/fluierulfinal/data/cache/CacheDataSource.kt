@@ -2,6 +2,7 @@ package ro.fluierulfinal.data.cache
 
 import ro.fluierulfinal.data.remote.dto.FixtureItemDto
 import ro.fluierulfinal.data.remote.dto.StandingsItemDto
+import ro.fluierulfinal.data.remote.dto.TopScorerItemDto
 import ro.fluierulfinal.domain.model.League
 import ro.fluierulfinal.domain.model.Team
 import java.time.Instant
@@ -26,6 +27,9 @@ interface CacheDataSource {
 
     suspend fun getStandings(leagueId: Int, season: Int): Cached<List<StandingsItemDto>>?
     suspend fun putStandings(leagueId: Int, season: Int, items: List<StandingsItemDto>, now: Instant)
+
+    suspend fun getTopScorers(leagueId: Int, season: Int): Cached<List<TopScorerItemDto>>?
+    suspend fun putTopScorers(leagueId: Int, season: Int, items: List<TopScorerItemDto>, now: Instant)
 
     suspend fun getFixturesDay(leagueId: Int, day: LocalDate): Cached<List<FixtureItemDto>>?
     suspend fun putFixturesDays(days: Map<Int, List<FixtureItemDto>>, day: LocalDate, now: Instant)

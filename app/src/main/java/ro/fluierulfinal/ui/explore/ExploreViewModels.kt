@@ -24,6 +24,7 @@ import ro.fluierulfinal.domain.model.FixtureStatus
 import ro.fluierulfinal.domain.model.League
 import ro.fluierulfinal.domain.model.Standings
 import ro.fluierulfinal.domain.model.SupportedLeagues
+import ro.fluierulfinal.domain.model.TopScorer
 import ro.fluierulfinal.navigation.ExploreLeagueRoute
 import java.time.Clock
 import java.time.LocalDate
@@ -60,6 +61,14 @@ sealed interface StandingsState {
     data class Error(val message: String) : StandingsState
 }
 
+/** Top scorers ("Golgheteri" view): loaded only when that view is opened. */
+sealed interface ScorersState {
+    data object NotLoaded : ScorersState
+    data object Loading : ScorersState
+    data class Loaded(val scorers: List<TopScorer>) : ScorersState
+    data class Error(val message: String) : ScorersState
+}
+
 sealed interface FixturesState {
     data object Loading : FixturesState
     data class Loaded(val groups: FixtureGroups, val source: DataSource) : FixturesState
@@ -74,6 +83,7 @@ data class ExploreLeagueUiState(
     val selectedDay: LocalDate,
     val fixtures: FixturesState = FixturesState.Loading,
     val standings: StandingsState = StandingsState.NotLoaded,
+    val scorers: ScorersState = ScorersState.NotLoaded,
 )
 
 /**
@@ -138,6 +148,25 @@ class ExploreLeagueViewModel @Inject constructor(
                 StandingsState.Error("Nu am putut încărca clasamentul. Verifică internetul.")
             }
             _state.update { it.copy(standings = result) }
+        }
+    }
+
+    /** Called when the "Golgheteri" view is opened; same rules as [loadStandings]. */
+    fun loadScorers(force: Boolean = false) {
+        val current = _state.value.scorers
+        if (!force && (current is ScorersState.Loaded || current is ScorersState.Loading)) return
+        _state.update { it.copy(scorers = ScorersState.Loading) }
+        viewModelScope.launch {
+            val result = try {
+                ScorersState.Loaded(standingsRepository.topScorers(leagueId, SupportedLeagues.STANDINGS_SEASON))
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: ApiFootballException) {
+                ScorersState.Error("API-Football: ${e.message}")
+            } catch (e: Exception) {
+                ScorersState.Error("Nu am putut încărca golgheterii. Verifică internetul.")
+            }
+            _state.update { it.copy(scorers = result) }
         }
     }
 

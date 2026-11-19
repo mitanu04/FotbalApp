@@ -25,6 +25,8 @@ data class StandingRowDto(
     val form: String? = null,             // last results, most recent last, e.g. "DWWWW"
     val description: String? = null,      // e.g. "UEFA Champions League Qualifiers", "Relegation"
     val all: StandingRecordDto,
+    val home: StandingRecordDto = StandingRecordDto(),
+    val away: StandingRecordDto = StandingRecordDto(),
 )
 
 @Serializable
@@ -41,3 +43,35 @@ data class StandingGoalsDto(
     val `for`: Int? = null,
     val against: Int? = null,
 )
+
+// /players/topscorers "response": [ { "player": {...}, "statistics": [ { "team", "games", "goals", "penalty" } ] } ]
+
+@Serializable
+data class TopScorerItemDto(
+    val player: PlayerDto,
+    val statistics: List<PlayerStatsDto> = emptyList(),
+)
+
+@Serializable
+data class PlayerDto(
+    val id: Int,
+    val name: String,
+    val photo: String? = null,
+)
+
+@Serializable
+data class PlayerStatsDto(
+    val team: TeamRefDto,
+    val games: PlayerGamesDto = PlayerGamesDto(),
+    val goals: PlayerGoalsDto = PlayerGoalsDto(),
+    val penalty: PlayerPenaltyDto = PlayerPenaltyDto(),
+)
+
+@Serializable
+data class PlayerGamesDto(val appearences: Int? = null)          // sic: the API's spelling
+
+@Serializable
+data class PlayerGoalsDto(val total: Int? = null, val assists: Int? = null)
+
+@Serializable
+data class PlayerPenaltyDto(val scored: Int? = null)

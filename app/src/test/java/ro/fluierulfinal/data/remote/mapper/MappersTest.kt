@@ -11,6 +11,7 @@ import ro.fluierulfinal.data.remote.dto.FixtureItemDto
 import ro.fluierulfinal.data.remote.dto.LeagueItemDto
 import ro.fluierulfinal.data.remote.dto.StandingsItemDto
 import ro.fluierulfinal.data.remote.dto.TeamItemDto
+import ro.fluierulfinal.data.remote.dto.TopScorerItemDto
 import ro.fluierulfinal.domain.model.FixtureStatus
 import ro.fluierulfinal.domain.model.FormLetter
 import ro.fluierulfinal.domain.model.Score
@@ -131,6 +132,28 @@ class MappersTest {
         // API form "DWWWW" lists the most recent result last; we keep the most recent first
         assertEquals(FormLetter.WIN, leader.form.first())
         assertEquals(FormLetter.DRAW, leader.form.last())
+        // home / away split of the same 10 play-off matches
+        assertEquals(5, leader.home.played)
+        assertEquals(4, leader.home.win)
+        assertEquals(13, leader.home.points)
+        assertEquals(5, leader.away.played)
+        assertEquals(11, leader.away.points)
+    }
+
+    @Test
+    fun topScorers_liga1_2024() {
+        val scorers = ApiJson.decodeFromString<ApiResponseDto<List<TopScorerItemDto>>>(resource("topscorers_283_2024.json"))
+            .response.toTopScorers()
+        assertEquals(20, scorers.size)
+        val first = scorers.first()
+        assertEquals(1, first.rank)
+        assertEquals("A. Mitriță", first.name)
+        assertEquals("Universitatea Craiova", first.team.name)
+        assertEquals(18, first.goals)
+        assertEquals(4, first.assists)
+        assertEquals(4, first.penalties)
+        // players with the same number of goals share a rank
+        scorers.zipWithNext().forEach { (a, b) -> if (a.goals == b.goals) assertEquals(a.rank, b.rank) }
     }
 
     @Test

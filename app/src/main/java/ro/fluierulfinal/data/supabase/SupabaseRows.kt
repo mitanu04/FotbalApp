@@ -4,6 +4,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import ro.fluierulfinal.data.remote.dto.FixtureItemDto
 import ro.fluierulfinal.data.remote.dto.StandingsItemDto
+import ro.fluierulfinal.data.remote.dto.TopScorerItemDto
 import ro.fluierulfinal.domain.model.AlertSettings
 import ro.fluierulfinal.domain.model.Favorite
 import ro.fluierulfinal.domain.model.League
@@ -100,6 +101,15 @@ data class FixturesDayRow(
 )
 
 fun fixturesDayRowId(leagueId: Int, day: String) = "${leagueId}_$day"
+
+@Serializable
+data class TopScorersRow(
+    val id: String,                          // "{leagueId}_{season}"
+    @SerialName("league_id") val leagueId: Int,
+    val season: Int,
+    val scorers: List<TopScorerItemDto>,     // raw /players/topscorers items
+    @SerialName("updated_at") val updatedAt: String,
+)
 
 @Serializable
 data class StandingsRow(

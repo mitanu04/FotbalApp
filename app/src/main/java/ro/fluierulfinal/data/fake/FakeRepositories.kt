@@ -30,6 +30,7 @@ import ro.fluierulfinal.domain.model.StandingRow
 import ro.fluierulfinal.domain.model.Standings
 import ro.fluierulfinal.domain.model.SupportedLeagues
 import ro.fluierulfinal.domain.model.Team
+import ro.fluierulfinal.domain.model.TopScorer
 import java.time.Clock
 import java.time.LocalDate
 import java.time.LocalTime
@@ -183,5 +184,14 @@ class FakeStandingsRepository @Inject constructor() : StandingsRepository {
             r.copy(rank = i + 1, description = when (i) { 0 -> "Champions League"; teams.lastIndex -> "Relegation"; else -> null })
         }
         return Standings(leagueId, season, listOf(StandingGroup("Regular Season", rows)))
+    }
+
+    override suspend fun topScorers(leagueId: Int, season: Int): List<TopScorer> {
+        delay(FAKE_DELAY_MS)
+        val teams = FakeData.teamsByLeague[leagueId].orEmpty()
+        val names = listOf("A. Popescu", "M. Ionescu", "D. Stan", "R. Marin", "C. Dobre", "V. Tănase")
+        return names.mapIndexed { i, n ->
+            TopScorer(i + 1, 1000 + i, n, null, teams[i % teams.size.coerceAtLeast(1)], goals = 15 - i * 2, assists = 6 - i, penalties = i % 3, appearances = 30)
+        }
     }
 }

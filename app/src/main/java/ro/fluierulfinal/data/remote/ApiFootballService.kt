@@ -8,6 +8,7 @@ import ro.fluierulfinal.data.remote.dto.LeagueItemDto
 import ro.fluierulfinal.data.remote.dto.StandingsItemDto
 import ro.fluierulfinal.data.remote.dto.StatusDto
 import ro.fluierulfinal.data.remote.dto.TeamItemDto
+import ro.fluierulfinal.data.remote.dto.TopScorerItemDto
 
 /**
  * API-Football v3 endpoints, described for Retrofit: it generates the implementation.
@@ -40,6 +41,13 @@ interface ApiFootballService {
         @Query("league") league: Int,
         @Query("season") season: Int,
     ): ApiResponseDto<List<StandingsItemDto>>
+
+    /** Top 20 scorers of a league season (free plan: seasons 2022–2024). */
+    @GET("players/topscorers")
+    suspend fun topScorers(
+        @Query("league") league: Int,
+        @Query("season") season: Int,
+    ): ApiResponseDto<List<TopScorerItemDto>>
 
     @GET("fixtures")
     suspend fun fixtures(

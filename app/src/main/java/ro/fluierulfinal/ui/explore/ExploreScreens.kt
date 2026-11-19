@@ -142,7 +142,13 @@ fun ExploreLeagueScreen(
             }
             if (tab == 1) {
                 LaunchedEffect(Unit) { viewModel.loadStandings() }   // e.g. after rotation, tab restored as "Clasament"
-                StandingsTab(state.standings, onRetry = { viewModel.loadStandings(force = true) })
+                StandingsTab(
+                    state = state.standings,
+                    scorers = state.scorers,
+                    onRetry = { viewModel.loadStandings(force = true) },
+                    onScorersNeeded = { viewModel.loadScorers() },
+                    onRetryScorers = { viewModel.loadScorers(force = true) },
+                )
             } else {
                 DateChipsRow(
                     days = state.days, selected = state.selectedDay, today = state.today,

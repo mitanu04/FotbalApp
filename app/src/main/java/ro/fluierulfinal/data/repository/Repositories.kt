@@ -6,6 +6,7 @@ import ro.fluierulfinal.domain.model.Favorite
 import ro.fluierulfinal.domain.model.Fixture
 import ro.fluierulfinal.domain.model.League
 import ro.fluierulfinal.domain.model.Standings
+import ro.fluierulfinal.domain.model.TopScorer
 import ro.fluierulfinal.domain.model.Team
 import java.time.LocalDate
 
@@ -84,6 +85,9 @@ interface FixtureRepository {
 interface StandingsRepository {
     /** League table for [season]: memory → Supabase cache → one /standings call. */
     suspend fun standings(leagueId: Int, season: Int): Standings
+
+    /** Top 20 scorers for [season]: memory → Supabase cache → one /players/topscorers call. */
+    suspend fun topScorers(leagueId: Int, season: Int): List<TopScorer>
 }
 
 interface FavoritesRepository {
