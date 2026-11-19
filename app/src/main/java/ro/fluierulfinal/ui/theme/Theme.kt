@@ -1,66 +1,45 @@
 package ro.fluierulfinal.ui.theme
 
+import android.provider.Settings
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
+import androidx.compose.material3.Shapes
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.Color
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 
-// Our own palette (not the Material defaults): dark background, slightly lighter cards,
-// blue-violet accent, red for live matches.
-// What each colorScheme slot means in this app:
-//   background        = page background
-//   surface           = cards (match lists, sections)
-//   surfaceVariant    = grey pills (filters, secondary buttons)
-//   primary           = accent (selected tab, arrows, buttons)
-//   primaryContainer  = top bar (blue in light mode, dark in dark mode)
-//   error             = live (minute, live score)
-//   errorContainer    = reddish background of live elements
+/** Spacing scale: use these instead of ad-hoc numbers, so the whole app breathes the same way. */
+@Immutable
+object Spacing {
+    val xs: Dp = 4.dp
+    val sm: Dp = 8.dp
+    val md: Dp = 12.dp
+    val lg: Dp = 16.dp
+    val xl: Dp = 24.dp
+    val xxl: Dp = 32.dp
+}
 
-private val DarkColors = darkColorScheme(
-    primary = Color(0xFF7A84FF),
-    onPrimary = Color.White,
-    primaryContainer = Color(0xFF1B1B23),
-    onPrimaryContainer = Color(0xFFF2F2F7),
-    secondaryContainer = Color(0xFF2E3270),
-    onSecondaryContainer = Color(0xFFE0E2FF),
-    background = Color(0xFF121218),
-    onBackground = Color(0xFFF2F2F7),
-    surface = Color(0xFF1E1E27),
-    onSurface = Color(0xFFF2F2F7),
-    surfaceVariant = Color(0xFF2A2A35),
-    onSurfaceVariant = Color(0xFF9C9CAB),
-    surfaceContainer = Color(0xFF1B1B23),
-    outline = Color(0xFF2E2E3A),
-    error = Color(0xFFFF4F4F),
-    errorContainer = Color(0xFF3A1C22),
-    onErrorContainer = Color(0xFFFF6B6B),
+/** Corners: cards 16dp, bottom sheets 24dp (Material uses extraLarge for them), chips fully round. */
+val AppShapes = Shapes(
+    small = RoundedCornerShape(8.dp),
+    medium = RoundedCornerShape(16.dp),
+    large = RoundedCornerShape(16.dp),
+    extraLarge = RoundedCornerShape(24.dp),
 )
 
-private val LightColors = lightColorScheme(
-    primary = Color(0xFF374DF5),
-    onPrimary = Color.White,
-    primaryContainer = Color(0xFF374DF5),
-    onPrimaryContainer = Color.White,
-    secondaryContainer = Color(0xFFDDE1FF),
-    onSecondaryContainer = Color(0xFF1A2380),
-    background = Color(0xFFEDF1F6),
-    onBackground = Color(0xFF222226),
-    surface = Color.White,
-    onSurface = Color(0xFF222226),
-    surfaceVariant = Color(0xFFF0F2F7),
-    onSurfaceVariant = Color(0xFF6B6F80),
-    surfaceContainer = Color.White,
-    outline = Color(0xFFE1E5EC),
-    error = Color(0xFFCB1818),
-    errorContainer = Color(0xFFFDE8E8),
-    onErrorContainer = Color(0xFFCB1818),
-)
+/** True when the user turned animations off ("Remove animations" in Android accessibility settings). */
+val LocalReduceMotion = staticCompositionLocalOf { false }
 
 /**
  * App theme. [mode] comes from [ThemeController]; SYSTEM follows the phone setting.
- * secondaryContainer / surfaceContainer are set explicitly because the bottom navigation bar uses them.
+ * Dynamic color (wallpaper-based, Android 12+) is deliberately not used: the brand colors always apply.
  */
 @Composable
 fun FluierulFinalTheme(
@@ -68,10 +47,22 @@ fun FluierulFinalTheme(
     content: @Composable () -> Unit,
 ) {
     val dark = mode.isDark()
-    MaterialTheme(
-        colorScheme = if (dark) DarkColors else LightColors,
-        content = content,
-    )
+    val context = LocalContext.current
+    val reduceMotion = remember(context) {
+        Settings.Global.getFloat(context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f
+    }
+    CompositionLocalProvider(
+        LocalExtendedColors provides if (dark) DarkExtendedColors else LightExtendedColors,
+        LocalScoreTypography provides AppScoreTypography,
+        LocalReduceMotion provides reduceMotion,
+    ) {
+        MaterialTheme(
+            colorScheme = if (dark) DarkColors else LightColors,
+            typography = AppTypography,
+            shapes = AppShapes,
+            content = content,
+        )
+    }
 }
 
 /** Whether this mode means dark colors right now (SYSTEM asks the phone). */
@@ -81,3 +72,11 @@ fun ThemeMode.isDark(): Boolean = when (this) {
     ThemeMode.LIGHT -> false
     ThemeMode.DARK -> true
 }
+
+/** `MaterialTheme.extendedColors.live` etc. */
+val MaterialTheme.extendedColors: ExtendedColors
+    @Composable @ReadOnlyComposable get() = LocalExtendedColors.current
+
+/** `MaterialTheme.scoreType.scoreList` etc. */
+val MaterialTheme.scoreType: ScoreTypography
+    @Composable @ReadOnlyComposable get() = LocalScoreTypography.current

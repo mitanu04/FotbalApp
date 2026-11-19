@@ -23,3 +23,4 @@ import kotlinx.serialization.Serializable
 @Serializable data object WeekendPlanRoute
 @Serializable data object SimulationRoute
 @Serializable data object ApiCoverageRoute
+@Serializable data object ComponentGalleryRoute

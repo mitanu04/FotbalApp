@@ -1,8 +1,11 @@
 package ro.fluierulfinal.ui.components
 
+import android.content.res.Configuration
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
@@ -13,33 +16,44 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import coil3.compose.SubcomposeAsyncImage
+import coil3.request.ImageRequest
+import coil3.request.crossfade
+import ro.fluierulfinal.R
+import ro.fluierulfinal.domain.model.Fixture
+import ro.fluierulfinal.domain.model.FixtureStatus
+import ro.fluierulfinal.domain.model.Score
+import ro.fluierulfinal.domain.model.Team
+import ro.fluierulfinal.ui.theme.BarlowCondensed
+import ro.fluierulfinal.ui.theme.FluierulFinalTheme
+import ro.fluierulfinal.ui.theme.ThemeMode
+import java.time.Instant
 import java.time.LocalDate
 
 // Small UI pieces shared by several screens.
 
 /**
- * Team logo loaded by Coil from [logoUrl]. While it loads, if there is no internet,
- * or if the team has no logo, a colored circle with the team's initials is shown instead.
+ * Team logo loaded by Coil from [logoUrl], fading in when it arrives (crossfade).
+ * While loading, offline, or without a logo: a circle with the team's initials.
  */
 @Composable
-fun TeamLogo(name: String, logoUrl: String?, size: Dp = 22.dp) {
+fun TeamLogo(name: String, logoUrl: String?, size: Dp = 24.dp, modifier: Modifier = Modifier) {
     if (logoUrl == null) {
-        InitialsCircle(name, size)
+        InitialsCircle(name, size, modifier)
         return
     }
     SubcomposeAsyncImage(
-        model = logoUrl,
+        model = ImageRequest.Builder(LocalContext.current).data(logoUrl).crossfade(true).build(),
         contentDescription = "Sigla $name",
         contentScale = ContentScale.Fit,
-        modifier = Modifier.size(size),
+        modifier = modifier.size(size),
         loading = { InitialsCircle(name, size) },
         error = { InitialsCircle(name, size) },
     )
@@ -47,69 +61,54 @@ fun TeamLogo(name: String, logoUrl: String?, size: Dp = 22.dp) {
 
 /** League logo (same fallback as [TeamLogo]). */
 @Composable
-fun LeagueLogo(name: String, logoUrl: String?, size: Dp = 28.dp) = TeamLogo(name, logoUrl, size)
+fun LeagueLogo(name: String, logoUrl: String?, size: Dp = 20.dp, modifier: Modifier = Modifier) =
+    TeamLogo(name, logoUrl, size, modifier)
 
-/** Circle with up to two initials, e.g. "FC" for "FC Botosani". Its color is derived from the name. */
+/** Circle with up to two initials, e.g. "FC" for "FC Botosani", in neutral theme colors. */
 @Composable
-private fun InitialsCircle(name: String, size: Dp) {
+private fun InitialsCircle(name: String, size: Dp, modifier: Modifier = Modifier) {
     val initials = name.filter { it.isUpperCase() }.take(2).ifEmpty { name.take(1) }
-    val color = PALETTE[(name.hashCode() and Int.MAX_VALUE) % PALETTE.size]
     Box(
-        modifier = Modifier.size(size).background(color, CircleShape),
+        modifier = modifier.size(size).background(MaterialTheme.colorScheme.surfaceVariant, CircleShape),
         contentAlignment = Alignment.Center,
     ) {
-        Text(initials, color = Color.White, fontWeight = FontWeight.Bold, fontSize = (size.value * 0.38f).sp)
+        Text(
+            initials, color = MaterialTheme.colorScheme.onSurfaceVariant, fontFamily = BarlowCondensed,
+            fontWeight = FontWeight.Bold, fontSize = MaterialTheme.typography.labelSmall.fontSize * (size.value / 24f),
+        )
     }
 }
 
-private val PALETTE = listOf(
-    Color(0xFFC8102E), Color(0xFF1D4FA3), Color(0xFF2E8B57), Color(0xFF5B2A86),
-    Color(0xFFE8482C), Color(0xFF0B6BCB), Color(0xFF8A1538), Color(0xFF14427A),
-)
-
-/** Magnifier icon drawn with Canvas (no icon library needed). */
-@Composable
-fun SearchIcon(color: Color, modifier: Modifier = Modifier) {
-    Canvas(modifier.size(22.dp)) {
-        val r = size.minDimension * 0.32f
-        val c = Offset(size.width * 0.43f, size.height * 0.43f)
-        drawCircle(color, r, c, style = Stroke(width = 2.dp.toPx()))
-        drawLine(color, Offset(c.x + r * 0.7f, c.y + r * 0.7f), Offset(size.width * 0.9f, size.height * 0.9f), 2.dp.toPx())
-    }
+/** Material Symbols Rounded icons (vector drawables in res/drawable). Filled variants mark the active tab. */
+object AppIcons {
+    val star @Composable get() = painterResource(R.drawable.ic_star)
+    val starFilled @Composable get() = painterResource(R.drawable.ic_star_filled)
+    val explore @Composable get() = painterResource(R.drawable.ic_explore)
+    val exploreFilled @Composable get() = painterResource(R.drawable.ic_explore_filled)
+    val ticket @Composable get() = painterResource(R.drawable.ic_confirmation_number)
+    val ticketFilled @Composable get() = painterResource(R.drawable.ic_confirmation_number_filled)
+    val settings @Composable get() = painterResource(R.drawable.ic_settings)
+    val settingsFilled @Composable get() = painterResource(R.drawable.ic_settings_filled)
+    val notifications @Composable get() = painterResource(R.drawable.ic_notifications)
+    val notificationsFilled @Composable get() = painterResource(R.drawable.ic_notifications_filled)
+    val delete @Composable get() = painterResource(R.drawable.ic_delete)
+    val add @Composable get() = painterResource(R.drawable.ic_add)
+    val search @Composable get() = painterResource(R.drawable.ic_search)
+    val back @Composable get() = painterResource(R.drawable.ic_arrow_back)
+    val check @Composable get() = painterResource(R.drawable.ic_check)
+    val chevronRight @Composable get() = painterResource(R.drawable.ic_chevron_right)
+    val ball @Composable get() = painterResource(R.drawable.ic_sports_soccer)
 }
 
-/** TV icon. */
-@Composable
-fun TvIcon(color: Color, modifier: Modifier = Modifier) {
-    Canvas(modifier.size(22.dp)) {
-        val stroke = 2.dp.toPx()
-        drawRoundRect(color, Offset(size.width * 0.1f, size.height * 0.28f), Size(size.width * 0.8f, size.height * 0.52f),
-            CornerRadius(3.dp.toPx()), style = Stroke(stroke))
-        drawLine(color, Offset(size.width * 0.35f, size.height * 0.08f), Offset(size.width * 0.5f, size.height * 0.26f), stroke)
-        drawLine(color, Offset(size.width * 0.65f, size.height * 0.08f), Offset(size.width * 0.5f, size.height * 0.26f), stroke)
-    }
-}
-
-/** Small chevron (up or down) for collapsing/expanding a section. */
-@Composable
-fun ChevronIcon(up: Boolean, color: Color, modifier: Modifier = Modifier) {
-    Canvas(modifier.size(14.dp)) {
-        val stroke = 2.dp.toPx()
-        val (yEdge, yTip) = if (up) size.height * 0.68f to size.height * 0.32f else size.height * 0.32f to size.height * 0.68f
-        drawLine(color, Offset(size.width * 0.15f, yEdge), Offset(size.width * 0.5f, yTip), stroke)
-        drawLine(color, Offset(size.width * 0.85f, yEdge), Offset(size.width * 0.5f, yTip), stroke)
-    }
-}
-
-/** App logo: a stylized whistle in the top bar text color. */
+/** Kept for the old login header; replaced by the new login design. */
 @Composable
 fun WhistleLogo(modifier: Modifier = Modifier) {
-    val gold = MaterialTheme.colorScheme.onPrimaryContainer
+    val fg = MaterialTheme.colorScheme.onPrimaryContainer
     val hole = MaterialTheme.colorScheme.primaryContainer
     Canvas(modifier.size(28.dp)) {
         val w = size.width
-        drawRoundRect(gold, Offset(0f, w * 0.28f), Size(w * 0.68f, w * 0.44f), CornerRadius(w * 0.22f))
-        drawRoundRect(gold, Offset(w * 0.55f, w * 0.28f), Size(w * 0.42f, w * 0.18f), CornerRadius(w * 0.05f))
+        drawRoundRect(fg, Offset(0f, w * 0.28f), Size(w * 0.68f, w * 0.44f), CornerRadius(w * 0.22f))
+        drawRoundRect(fg, Offset(w * 0.55f, w * 0.28f), Size(w * 0.42f, w * 0.18f), CornerRadius(w * 0.05f))
         drawCircle(hole, w * 0.09f, Offset(w * 0.34f, w * 0.5f))
     }
 }
@@ -128,3 +127,35 @@ fun shortDayLabel(day: LocalDate, today: LocalDate): String = when (day) {
 /** e.g. "Luni, 26 oct". */
 fun longDayLabel(day: LocalDate): String =
     "${DAYS[day.dayOfWeek.value - 1]}, ${day.dayOfMonth} ${MONTHS[day.monthValue - 1]}"
+
+// ---------------------------------------------------------------------------------------------
+// Preview helpers: every component shows itself in both themes with the same sample data.
+// ---------------------------------------------------------------------------------------------
+
+/** Wraps preview content in our theme and the screen background color. */
+@Composable
+fun PreviewSurface(dark: Boolean, content: @Composable () -> Unit) {
+    FluierulFinalTheme(if (dark) ThemeMode.DARK else ThemeMode.LIGHT) {
+        Column(Modifier.background(MaterialTheme.colorScheme.background).padding(12.dp)) { content() }
+    }
+}
+
+/** Light + dark side by side in Android Studio's preview pane. */
+@Preview(name = "Light", showBackground = true, widthDp = 380)
+@Preview(name = "Dark", showBackground = true, widthDp = 380, uiMode = Configuration.UI_MODE_NIGHT_YES)
+annotation class ThemePreviews
+
+/** Sample data for previews and the component gallery (real API-Football ids, so logos load). */
+object PreviewData {
+    private fun team(id: Int, name: String) = Team(id, name, "https://media.api-sports.io/football/teams/$id.png")
+    val rapid = team(6231, "Rapid")
+    val fcsb = team(559, "FCSB")
+    val craiova = team(632, "Universitatea Craiova")
+    val cluj = team(2246, "CFR 1907 Cluj")
+    private val kickoff: Instant = Instant.parse("2026-11-20T18:30:00Z")
+
+    val live = Fixture(1, 283, 2026, kickoff, FixtureStatus.LIVE, 67, rapid, fcsb, Score(2, 1))
+    val scheduled = Fixture(2, 283, 2026, kickoff.plusSeconds(7200), FixtureStatus.SCHEDULED, null, craiova, cluj, Score(null, null))
+    val finished = Fixture(3, 283, 2026, kickoff.minusSeconds(86400), FixtureStatus.FINISHED, null, cluj, rapid, Score(0, 0))
+    val postponed = Fixture(4, 283, 2026, kickoff, FixtureStatus.POSTPONED, null, fcsb, craiova, Score(null, null))
+}

@@ -38,6 +38,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
@@ -97,6 +99,7 @@ fun AddFavoriteScreen(onBack: () -> Unit, viewModel: AddFavoriteViewModel = hilt
 @Composable
 private fun ResultRow(team: Team, added: Boolean, onAdd: () -> Unit) {
     val colors = MaterialTheme.colorScheme
+    val haptics = LocalHapticFeedback.current
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(colors.surface).padding(horizontal = 16.dp, vertical = 10.dp),
@@ -112,7 +115,7 @@ private fun ResultRow(team: Team, added: Boolean, onAdd: () -> Unit) {
                 Text("Adăugată", color = colors.primary, fontSize = 14.sp, modifier = Modifier.padding(start = 4.dp, end = 8.dp))
             }
         } else {
-            FilledTonalButton(onClick = onAdd) { Text("Adaugă") }
+            FilledTonalButton(onClick = { haptics.performHapticFeedback(HapticFeedbackType.Confirm); onAdd() }) { Text("Adaugă") }
         }
     }
 }

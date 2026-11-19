@@ -3,20 +3,19 @@ package ro.fluierulfinal.navigation
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.List
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -26,7 +25,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import ro.fluierulfinal.ui.components.AppIcons
 import ro.fluierulfinal.ui.debug.ApiCoverageScreen
+import ro.fluierulfinal.ui.debug.ComponentGalleryScreen
 import ro.fluierulfinal.ui.explore.ExploreLeagueScreen
 import ro.fluierulfinal.ui.explore.ExploreScreen
 import ro.fluierulfinal.ui.favorites.AddFavoriteScreen
@@ -38,13 +39,20 @@ import ro.fluierulfinal.ui.settings.SettingsScreen
 import kotlin.reflect.KClass
 
 /** One tab of the bottom bar. */
-private data class TopLevelTab(val route: Any, val routeClass: KClass<*>, val label: String, val icon: ImageVector)
+/** One tab of the bottom bar; Material Symbols Rounded, outlined when idle and filled when active. */
+private data class TopLevelTab(
+    val route: Any,
+    val routeClass: KClass<*>,
+    val label: String,
+    val icon: @Composable () -> Painter,
+    val selectedIcon: @Composable () -> Painter,
+)
 
 private val TABS = listOf(
-    TopLevelTab(FavoritesRoute, FavoritesRoute::class, "Favorite", Icons.Filled.Star),
-    TopLevelTab(ExploreRoute, ExploreRoute::class, "Explorează", Icons.Filled.Search),
-    TopLevelTab(TicketRoute, TicketRoute::class, "Biletul meu", Icons.AutoMirrored.Filled.List),
-    TopLevelTab(SettingsRoute, SettingsRoute::class, "Setări", Icons.Filled.Settings),
+    TopLevelTab(FavoritesRoute, FavoritesRoute::class, "Favorite", { AppIcons.star }, { AppIcons.starFilled }),
+    TopLevelTab(ExploreRoute, ExploreRoute::class, "Explorează", { AppIcons.explore }, { AppIcons.exploreFilled }),
+    TopLevelTab(TicketRoute, TicketRoute::class, "Biletul meu", { AppIcons.ticket }, { AppIcons.ticketFilled }),
+    TopLevelTab(SettingsRoute, SettingsRoute::class, "Setări", { AppIcons.settings }, { AppIcons.settingsFilled }),
 )
 
 /**
@@ -66,14 +74,23 @@ fun AppNavHost(
         contentWindowInsets = WindowInsets(0),
         bottomBar = {
             if (showBottomBar) {
-                NavigationBar {
+                val colors = MaterialTheme.colorScheme
+                NavigationBar(containerColor = colors.surface, tonalElevation = 0.dp) {
                     TABS.forEach { tab ->
                         val selected = destination?.hierarchy?.any { it.hasRoute(tab.routeClass) } == true
                         NavigationBarItem(
                             selected = selected,
                             onClick = { navController.navigateToTab(tab.route) },
-                            icon = { Icon(tab.icon, contentDescription = null) },
-                            label = { Text(tab.label) },
+                            icon = { Icon(if (selected) tab.selectedIcon() else tab.icon(), contentDescription = null) },
+                            label = { Text(tab.label, style = MaterialTheme.typography.labelMedium) },
+                            // active tab: filled icon in the accent color, no pill behind it
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = colors.primary,
+                                selectedTextColor = colors.onSurface,
+                                indicatorColor = Color.Transparent,
+                                unselectedIconColor = colors.onSurfaceVariant,
+                                unselectedTextColor = colors.onSurfaceVariant,
+                            ),
                         )
                     }
                 }
@@ -113,6 +130,7 @@ fun AppNavHost(
                     ),
                     debugTools = listOf(
                         SettingsLink("Test acoperire API", "Plan, id-uri ligi, coverage (3 cereri)", null) { navController.navigate(ApiCoverageRoute) },
+                        SettingsLink("Galerie componente", "Design system-ul, în light și dark", null) { navController.navigate(ComponentGalleryRoute) },
                     ),
                     accountSection = { AccountSection(userEmail, onSignOut) },
                 )
@@ -147,6 +165,9 @@ fun AppNavHost(
             }
             composable<SimulationRoute> {
                 PlaceholderScreen("Simulare", "S10", "Simulează gol, roșu, penalty sau echipe de start, ca să demonstrezi alertele.", back)
+            }
+            composable<ComponentGalleryRoute> {
+                ComponentGalleryScreen(onBack = back)
             }
             composable<ApiCoverageRoute> {
                 ApiCoverageScreen(onBack = back)
